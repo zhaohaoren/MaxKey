@@ -1,0 +1,51 @@
+server:
+  port: ${SERVER_PORT:9527}
+  servlet:
+    context-path: /sign
+    session:
+      timeout: ${SERVLET_SESSION_TIMEOUT:600}
+  frontend:
+    port: ${SERVER_FRONTEND_PORT:4200}
+
+
+application:
+  #MaxKey Title and Version
+  formatted-version: v4.2.0 GA
+
+spring:
+  application:
+    name: maxkey
+  main:
+    banner-mode: log
+    allow-bean-definition-overriding: true
+  profiles:
+    active:
+      - dev
+      - maxkey
+
+knife4j:
+  enable: true
+  setting:
+    language: ZH_CN
+    swagger-model-name: 实体类列表
+
+management:
+  endpoints:
+    enabled-by-default: false
+  health:
+    mail:
+      enabled: false
+    redis:
+      enabled: false
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /swagger-ui/v3/api-docs
+    version: OPENAPI_3_0
+  swagger-ui:
+    enabled: true
+    operations-sorter: alpha
+    path: /swagger-ui.html
+    showExtensions: true
+    tags-sorter: alpha

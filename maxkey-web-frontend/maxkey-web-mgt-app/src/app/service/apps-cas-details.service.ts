@@ -28,7 +28,7 @@ import { BaseService } from './base.service';
 })
 export class AppsCasDetailsService extends BaseService<AppsCasDetails> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/apps/cas');
+    super(_httpClient, '/admin/apps/cas');
   }
 
   init(): Observable<Message<AppsCasDetails>> {

@@ -28,6 +28,6 @@ import { BaseService } from './base.service';
 })
 export class SocialsProviderService extends BaseService<SocialsProvider> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/config/socialsprovider');
+    super(_httpClient, '/admin/config/socialsprovider');
   }
 }

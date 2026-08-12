@@ -1,0 +1,407 @@
+#spring.profiles.active=dev
+#application
+#server config
+#spring.profiles.active=dev
+#server port
+#server.port=80
+#ssl
+#web app context path
+#encoding
+#server.servlet.encoding.charset=UTF-8
+#server.servlet.encoding.enabled=true
+#server.servlet.encoding.force=true
+#datasource
+#mybatis
+#redis
+#mail
+#for freemarker
+#static resources
+#main
+
+###########\u3010Kafka\u96c6\u7fa4\u3011###########
+###########\u3010\u521d\u59cb\u5316\u751f\u4ea7\u8005\u914d\u7f6e\u3011###########
+# \u91cd\u8bd5\u6b21\u6570
+# \u5e94\u7b54\u7ea7\u522b:\u591a\u5c11\u4e2a\u5206\u533a\u526f\u672c\u5907\u4efd\u5b8c\u6210\u65f6\u5411\u751f\u4ea7\u8005\u53d1\u9001ack\u786e\u8ba4(\u53ef\u90090\u30011\u3001all/-1)
+# \u6279\u91cf\u5927\u5c0f
+# \u63d0\u4ea4\u5ef6\u65f6
+# \u5f53\u751f\u4ea7\u7aef\u79ef\u7d2f\u7684\u6d88\u606f\u8fbe\u5230batch-size\u6216\u63a5\u6536\u5230\u6d88\u606flinger.ms\u540e,\u751f\u4ea7\u8005\u5c31\u4f1a\u5c06\u6d88\u606f\u63d0\u4ea4\u7ed9kafka
+# linger.ms\u4e3a0\u8868\u793a\u6bcf\u63a5\u6536\u5230\u4e00\u6761\u6d88\u606f\u5c31\u63d0\u4ea4\u7ed9kafka,\u8fd9\u65f6\u5019batch-size\u5176\u5b9e\u5c31\u6ca1\u7528\u4e86
+
+# \u751f\u4ea7\u7aef\u7f13\u51b2\u533a\u5927\u5c0f
+# Kafka\u63d0\u4f9b\u7684\u5e8f\u5217\u5316\u548c\u53cd\u5e8f\u5217\u5316\u7c7b
+# \u81ea\u5b9a\u4e49\u5206\u533a\u5668
+# spring.kafka.producer.properties.partitioner.class=com.felix.kafka.producer.CustomizePartitioner
+
+############################################################################
+#                domain name configuration
+#default.uri
+#InMemory 0 , jdbc  1, Redis 2
+#identity
+
+############################################################################
+#                Login configuration
+#enable captcha
+#text or arithmetic
+#enable two factor,use one time password
+#TimeBasedOtpAuthn MailOtpAuthn SmsOtpAuthnYunxin SmsOtpAuthnAliyun SmsOtpAuthnTencentCloud
+#enable social sign on
+#social sign on providers
+#Enable kerberos/SPNEGO
+#wsFederation
+#remeberme
+#validity
+
+#to default application web site
+
+
+#SmsOtpAuthnYunxin SmsOtpAuthnAliyun SmsOtpAuthnTencentCloud
+
+
+
+
+
+############################################################################
+#                Kerberos Login configuration
+############################################################################
+#short name of user domain must be in upper case,eg:MAXKEY
+#short name of user domain must be in upper case,eg:MAXKEY.ORG
+#last 8Bit crypto for Kerberos web Authentication
+#Kerberos Authentication server RUL
+############################################################################
+#                HTTPHEADER Login configuration
+############################################################################
+# iv-user is for IBM Security Access Manager
+#maxkey.httpheader.headername=iv-user
+
+############################################################################
+#                BASIC Login support configuration
+############################################################################
+
+
+#############################################################################
+#                WsFederation Login support configuration
+#identifier: the identifer for the ADFS server
+#url: the login url for ADFS
+#principal: the name of the attribute/assertion returned by ADFS that contains the principal's username.
+#relyingParty: the identifier of the CAS Server as it has been configured in ADFS.
+#tolerance: (optional) the amount of drift to allow when validating the timestamp on the token. Default: 10000 (ms)
+#attributeMutator: (optional) a class (defined by you) that can modify the attributes/assertions returned by the ADFS server
+#signingCertificate: ADFS's signing certificate used to validate the token/assertions issued by ADFS.
+############################################################################
+
+#############################################################################
+
+#############################################################################
+#                OIDC V1.0 METADATA configuration
+
+#############################################################################
+#                SAML V2.0 configuration
+#saml common
+
+
+#saml idp keystore
+#keystore id for sec
+
+
+#saml sp keystore
+
+#Saml v20 METADATA
+
+############################################################################
+#              Social Sign On Configuration                                #
+#you config client.id & client.secret only
+############################################################################
+
+############################################################################
+#sina weibo
+
+#Google
+
+#QQ
+
+#dingtalk
+
+#Microsoft
+
+#facebook
+
+application:
+  title: 'MaxKey'
+  name: 'MaxKey'
+  formatted-version: 'v2.0.0 GA'
+server:
+  port: '443'
+  ssl:
+    key-store: 'maxkeyserver.keystore'
+    key-alias: 'maxkey'
+    enabled: 'true'
+    key-store-password: 'maxkey'
+    key-store-type: 'JKS'
+  servlet:
+    context-path: '/maxkey'
+spring:
+  servlet:
+    multipart:
+      enabled: 'true'
+      max-file-size: '4194304'
+  datasource:
+    username: 'root'
+    password: 'maxkey'
+    url: 'jdbc:mysql://localhost/maxkey?autoReconnect=true&characterEncoding=UTF-8&serverTimezone=UTC'
+    driver-class-name: 'com.mysql.cj.jdbc.Driver'
+    type: 'com.alibaba.druid.pool.DruidDataSource'
+  redis:
+    host: '127.0.0.1'
+    port: '6379'
+    password: 'password'
+    timeout: '10000'
+    jedis:
+      pool:
+        max-wait: '1000'
+        max-idle: '200'
+    lettuce:
+      pool:
+        max-active: '-1'
+        min-idle: '0'
+  mail:
+    default-encoding: 'utf-8'
+    host: 'smtp.163.com'
+    port: '465'
+    username: 'maxkey@163.com'
+    password: 'password'
+    protocol: 'smtp'
+    properties:
+      ssl: 'true'
+      sender: 'maxkey@163.com'
+      mailotp:
+        message:
+          subject: 'MaxKey One Time PassWord'
+          template: '{0} You Token is {1} , it validity in {2}  minutes.'
+  freemarker:
+    template-loader-path: 'classpath:/templates/views'
+    cache: 'false'
+    charset: 'UTF-8'
+    check-template-location: 'true'
+    content-type: 'text/html'
+    expose-request-attributes: 'false'
+    expose-session-attributes: 'false'
+    request-context-attribute: 'request'
+    suffix: '.ftl'
+  mvc:
+    static-path-pattern: '/static/**'
+  messages:
+    basename: 'classpath:messages/message'
+    encoding: 'UTF-8'
+  main:
+    banner-mode: 'log'
+    allow-bean-definition-overriding: 'true'
+  kafka:
+    bootstrap-servers: 'localhost:9092'
+    producer:
+      retries: '0'
+      acks: '1'
+      batch-size: '16384'
+      properties:
+        linger:
+          ms: '0'
+      buffer-memory: '33554432'
+      key-serializer: 'org.apache.kafka.common.serialization.StringSerializer'
+      value-serializer: 'org.apache.kafka.common.serialization.StringSerializer'
+mybatis:
+  type-aliases-package: 'org.maxkey.domain,org.maxkey.domain.apps,'
+  mapper-locations: 'classpath*:/org/maxkey/persistence/mapper/xml/mysql/*.xml'
+maxkey:
+  server:
+    domain: 'maxkey.top'
+    'domain.sub': 'sso.${maxkey.server.domain}'
+    name: 'http://${maxkey.server.domain.sub}'
+    prefix:
+      uri: '${maxkey.server.name}/maxkey'
+    default:
+      uri: '${maxkey.server.prefix.uri}/maxkey/appList'
+    management:
+      uri: '${maxkey.server.name}:9521/maxkey-mgt/login'
+    persistence: '0'
+  identity:
+    kafkasupport: 'false'
+  app:
+    issuer: 'CN=ConSec,CN=COM,CN=SH'
+  login:
+    captcha: 'true'
+    'captcha.type': 'text'
+    mfa: 'true'
+    'mfa.type': 'TimeBasedOtpAuthn'
+    socialsignon: 'true'
+    'socialsignon.providers': 'sinaweibo,google,qq,dingtalk,microsoft,facebook'
+    kerberos: 'true'
+    wsfederation: 'false'
+    remeberme: 'true'
+    'remeberme.validity': '0'
+    default:
+      uri: 'appList'
+  ipaddress:
+    whitelist: 'false'
+  otp:
+    sms: 'SmsOtpAuthnYunxin'
+    'sms.aliyun.accesskeyid': '94395d754eb55693043f5d6a2b772ef4'
+    'sms.aliyun.accesssecret': '05d5485357bc'
+    'sms.aliyun.templatecode': '14860095'
+    'sms.aliyun.signname': 'maxkey'
+    'sms.yunxin.appkey': '94395d754eb55693043f5d6a2b772ef4'
+    'sms.yunxin.appsecret': '05d5485357bc'
+    'sms.yunxin.templateid': '14860095'
+    'sms.tencentcloud.secretid': '94395d754eb55693043f5d6a2b772ef4'
+    'sms.tencentcloud.secretkey': '05d5485357bc'
+    'sms.tencentcloud.smssdkappid': '1486220095'
+    'sms.tencentcloud.templateid': '14860095'
+    'sms.tencentcloud.sign': '1486009522'
+    keyuri:
+      format:
+        type: 'totp'
+        digits: '6'
+        issuer: 'MaxKey'
+        domain: '${maxkey.server.domain}'
+        period: '30'
+  support:
+    kerberos:
+      default:
+        userdomain: 'MAXKEY'
+        fulluserdomain: 'MAXKEY.ORG'
+        crypto: '846KZSzYq56M6d5o'
+        redirecturi: 'http://sso.maxkey.top/kerberos/authn/'
+    httpheader:
+      enable: 'false'
+      headername: 'header-user'
+    basic:
+      enable: 'false'
+    wsfederation:
+      identifier: 'http://adfs.maxkey.top/adfs/services/trust'
+      url: 'https://adfs.maxkey.top/adfs/ls/'
+      principal: 'upn'
+      relyingParty: 'urn:federation:connsec'
+      signingCertificate: 'adfs-signing.crt'
+      tolerance: '10000'
+      upn:
+        suffix: 'maxkey.org'
+      logoutUrl: 'https://adfs.maxkey.top/adfs/ls/?wa=wsignout1.0'
+  oidc:
+    metadata:
+      issuer: '${maxkey.server.name}/maxkey'
+      authorizationEndpoint: '${maxkey.server.name}/maxkey/authz/oauth/v20/authorize'
+      tokenEndpoint: '${maxkey.server.name}/maxkey/authz/oauth/v20/token'
+      userinfoEndpoint: '${maxkey.server.name}/maxkey/api/connect/userinfo'
+  saml:
+    v20:
+      max:
+        parser:
+          pool:
+            size: '2'
+      assertion:
+        validity:
+          time:
+            ins:
+              seconds: '90'
+      replay:
+        cache:
+          life:
+            in:
+              millis: '14400000'
+      issue:
+        instant:
+          check:
+            clock:
+              skew:
+                in:
+                  seconds: '90'
+            validity:
+              time:
+                in:
+                  seconds: '300'
+      idp:
+        keystore: 'classpath:config/samlServerKeystore.jks'
+        'keystore.password': 'maxkey'
+        'keystore.private.key.password': 'maxkey'
+        issuing:
+          entity:
+            id: 'maxkey.top'
+        issuer: 'https://sso.maxkey.top/maxkey/saml'
+        receiver:
+          endpoint: 'https://sso.maxkey.top/'
+      sp:
+        keystore: 'classpath:config/samlClientKeystore.jks'
+        'keystore.password': 'maxkey'
+        'keystore.private.key.password': 'maxkey'
+        issuing:
+          entity:
+            id: 'client.maxkey.org'
+      metadata:
+        orgName: 'maxkey'
+        orgDisplayName: 'maxkey'
+        orgURL: 'https://github.com/shimingxy/MaxKey'
+        contactType: 'technical'
+        company: 'maxkey'
+        givenName: 'maxkey'
+        surName: 'maxkey'
+        emailAddress: 'shimingxy@163.com'
+        telephoneNumber: '4008981111'
+  socialsignon:
+    sinaweibo:
+      provider: 'sinaweibo'
+      'provider.name': '新浪微博'
+      icon: 'images/social/sinaweibo.png'
+      client:
+        id: '3379757634'
+        secret: '1adfdf9800299037bcab9d1c238664ba'
+      account:
+        id: 'id'
+      sortorder: '1'
+    google:
+      provider: 'google'
+      'provider.name': 'Google'
+      icon: 'images/social/google.png'
+      client:
+        id: '519914515488.apps.googleusercontent.com'
+        secret: '3aTW3Iw7e11QqMnHxciCaXTt'
+      account:
+        id: 'id'
+      sortorder: '2'
+    qq:
+      provider: 'qq'
+      'provider.name': 'QQ'
+      icon: 'images/social/qq.png'
+      client:
+        id: '101225363'
+        secret: '8577d75e0eb4a91ac549cc8be3371bfd'
+      account:
+        id: 'openid'
+      sortorder: '4'
+    dingtalk:
+      provider: 'dingtalk'
+      'provider.name': 'dingtalk'
+      icon: 'images/social/dingtalk.png'
+      client:
+        id: 'dingoawf2jyiwh2uzqnphg'
+        secret: 'Crm7YJbMKfRlvG2i1SHpg4GHVpqF_oXiEjhmRQyiSiuzNRWpbFh9i0UjDTfhOoN9'
+      account:
+        id: 'openid'
+      sortorder: '5'
+    microsoft:
+      provider: 'microsoft'
+      'provider.name': 'Microsoft'
+      icon: 'images/social/live.png'
+      client:
+        id: '24aa73b6-7928-4e64-bd64-d8682e650f95'
+        secret: 'PF[_AthtjVrtWVO2mNy@CJxY1@Z8FNf5'
+      account:
+        id: 'id'
+      sortorder: '6'
+    facebook:
+      provider: 'facebook'
+      'provider.name': 'facebook'
+      icon: 'images/social/facebook.png'
+      client:
+        id: 'appKey'
+        secret: 'appSecret'
+      account:
+        id: 'id'
+      sortorder: '7'

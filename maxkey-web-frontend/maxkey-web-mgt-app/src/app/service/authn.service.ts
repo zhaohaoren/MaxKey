@@ -46,7 +46,7 @@ export class AuthnService {
   }
 
   get(authParam: any) {
-    return this.http.get('/login/get?_allow_anonymous=true', authParam);
+    return this.http.get('/admin/login/get?_allow_anonymous=true', authParam);
   }
 
   produceOtp(authParam: any) {
@@ -54,7 +54,7 @@ export class AuthnService {
   }
 
   login(authParam: any) {
-    return this.http.post('/login/signin?_allow_anonymous=true', authParam);
+    return this.http.post('/admin/login/signin?_allow_anonymous=true', authParam);
   }
 
   congress(authParam: any) {
@@ -66,7 +66,7 @@ export class AuthnService {
   }
 
   logout() {
-    return this.http.get('/logout');
+    return this.http.get('/admin/logout');
   }
 
   clear() {

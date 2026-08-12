@@ -28,7 +28,7 @@ import { BaseService } from './base.service';
 })
 export class AppsSamlDetailsService extends BaseService<AppsSamlDetails> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/apps/saml20');
+    super(_httpClient, '/admin/apps/saml20');
   }
 
   init(): Observable<Message<AppsSamlDetails>> {

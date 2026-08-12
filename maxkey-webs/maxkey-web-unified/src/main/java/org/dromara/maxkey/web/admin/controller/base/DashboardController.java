@@ -1,0 +1,78 @@
+/*
+ * Copyright [2020] [MaxKey of copyright http://www.maxkey.top]
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+
+package org.dromara.maxkey.web.admin.controller.base;
+
+import org.dromara.maxkey.authn.annotation.CurrentUser;
+import org.dromara.maxkey.entity.Message;
+import org.dromara.maxkey.entity.dto.DashboardVo;
+import org.dromara.maxkey.entity.dto.InstDto;
+import org.dromara.maxkey.entity.idm.UserInfo;
+import org.dromara.maxkey.persistence.service.ReportService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Index
+ * @author Crystal.Sea
+ *
+ */
+@RestController
+@RequestMapping("/admin")
+public class DashboardController {
+    private static Logger logger = LoggerFactory.getLogger(DashboardController.class);
+    
+    @Autowired
+    ReportService reportService;
+
+    @GetMapping(value={"/dashboard"})
+    public Message<DashboardVo> dashboard(@CurrentUser UserInfo currentUser) {
+        logger.debug("dashboard . ");
+        
+        InstDto inst = new InstDto(currentUser.getInstId());
+        
+        DashboardVo dbVo = new DashboardVo(currentUser.getInstId());
+        dbVo.setDayCount(reportService.analysisDayCount(inst));
+        dbVo.setMonthCount(reportService.analysisMonthCount(inst));
+        dbVo.setNewUsers(reportService.analysisNewUsers(inst));
+        
+        dbVo.setOnlineUsers(reportService.analysisOnlineUsers(inst));
+        dbVo.setActiveUsers(reportService.analysisActiveUsers(inst));
+        
+        dbVo.setTotalUsers(reportService.totalUsers(inst));
+        dbVo.setTotalDepts(reportService.totalDepts(inst));
+        dbVo.setTotalApps(reportService.totalApps(inst));
+        dbVo.setTotalGroups(reportService.totalGroups(inst));
+        
+        dbVo.setReportMonth(reportService.analysisMonth(inst));
+        dbVo.setReportDayHour(reportService.analysisDayHour(inst));
+        
+        dbVo.setReportProvince(reportService.analysisProvince(inst));
+        
+        dbVo.setReportCountry(reportService.analysisCountry(inst));
+        
+        dbVo.setReportBrowser(reportService.analysisBrowser(inst));
+        
+        dbVo.setReportApp(reportService.analysisApp(inst));
+        return new Message<>(dbVo);
+    }
+
+}

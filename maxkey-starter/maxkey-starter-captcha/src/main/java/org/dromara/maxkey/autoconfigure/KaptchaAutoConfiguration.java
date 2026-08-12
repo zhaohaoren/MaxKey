@@ -22,6 +22,7 @@ import com.google.code.kaptcha.impl.DefaultKaptcha;
 import com.google.code.kaptcha.util.Config;
 import java.io.IOException;
 import java.util.Properties;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -34,20 +35,24 @@ import org.springframework.core.io.Resource;
 public class KaptchaAutoConfiguration {
     private static final  Logger _logger = LoggerFactory.getLogger(KaptchaAutoConfiguration.class);
     
-    public static final String KAPTCHA_PROPERTY      = "/kaptcha.properties";
+    public static final String KAPTCHA_PROPERTY      = "/kaptcha.yml";
 
     /**
      * Captcha Producer  Config .
      * @return Producer
-     * @throws IOException kaptcha.properties is null
+     * @throws IOException kaptcha.yml is null
      */
     @Bean
     Producer captchaProducer() throws IOException {
         Resource resource = new ClassPathResource(KAPTCHA_PROPERTY);
         _logger.debug("Kaptcha config file {}" , resource.getURL());
         DefaultKaptcha  kaptcha = new DefaultKaptcha();
-        Properties properties = new Properties();
-        properties.load(resource.getInputStream());
+        YamlPropertiesFactoryBean yamlFactory = new YamlPropertiesFactoryBean();
+        yamlFactory.setResources(resource);
+        Properties properties = yamlFactory.getObject();
+        if (properties == null) {
+            throw new IOException("无法加载验证码 YAML 配置: " + KAPTCHA_PROPERTY);
+        }
         Config config = new Config(properties);
         kaptcha.setConfig(config);
         return kaptcha;

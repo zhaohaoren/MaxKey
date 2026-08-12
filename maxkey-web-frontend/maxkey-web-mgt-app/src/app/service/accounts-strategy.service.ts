@@ -28,6 +28,6 @@ import { BaseService } from './base.service';
 })
 export class AccountsStrategyService extends BaseService<AccountsStrategy> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/config/accountsstrategy');
+    super(_httpClient, '/admin/config/accountsstrategy');
   }
 }

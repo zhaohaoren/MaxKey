@@ -25,6 +25,6 @@ import { BaseService } from './base.service';
 })
 export class PasswordPolicyService extends BaseService<PasswordPolicy> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/config/passwordpolicy');
+    super(_httpClient, '/admin/config/passwordpolicy');
   }
 }

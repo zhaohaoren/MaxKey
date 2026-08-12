@@ -25,6 +25,6 @@ import { BaseService } from './base.service';
 })
 export class GroupsService extends BaseService<Groups> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/access/groups');
+    super(_httpClient, '/admin/access/groups');
   }
 }

@@ -27,7 +27,7 @@ import { BaseService } from './base.service';
 })
 export class AppsOauth20DetailsService extends BaseService<AppsOauth20Details> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/apps/oauth20');
+    super(_httpClient, '/admin/apps/oauth20');
   }
 
   init(): Observable<Message<AppsOauth20Details>> {

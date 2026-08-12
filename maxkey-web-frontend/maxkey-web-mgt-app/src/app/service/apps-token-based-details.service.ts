@@ -28,7 +28,7 @@ import { BaseService } from './base.service';
 })
 export class AppsTokenBasedDetailsService extends BaseService<AppsTokenBasedDetails> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/apps/tokenbased');
+    super(_httpClient, '/admin/apps/tokenbased');
   }
 
   init(): Observable<Message<AppsTokenBasedDetails>> {

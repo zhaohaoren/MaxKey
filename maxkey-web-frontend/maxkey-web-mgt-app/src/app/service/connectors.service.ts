@@ -28,6 +28,6 @@ import { BaseService } from './base.service';
 })
 export class ConnectorsService extends BaseService<Connectors> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/config/connectors');
+    super(_httpClient, '/admin/config/connectors');
   }
 }

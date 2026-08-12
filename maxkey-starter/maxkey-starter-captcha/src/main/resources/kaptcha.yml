@@ -1,0 +1,23 @@
+#kaptcha.obscurificator.impl=com.google.code.kaptcha.impl.ShadowGimpy
+#kaptcha.noise.impl=com.google.code.kaptcha.impl.DefaultNoise
+#kaptcha.noise.color=white
+
+kaptcha:
+  image:
+    width: '120'
+    height: '40'
+  border: 'no'
+  obscurificator:
+    impl: 'com.google.code.kaptcha.impl.Ripple'
+  textproducer:
+    font:
+      size: '30'
+    char:
+      string: '0123456789'
+      length: '4'
+      space: '6'
+    impl: 'com.google.code.kaptcha.impl.UniqueTextCreator'
+  noise:
+    impl: 'com.google.code.kaptcha.impl.LightNoise'
+  word:
+    impl: 'com.google.code.kaptcha.text.impl.RandomColorWordRenderer'

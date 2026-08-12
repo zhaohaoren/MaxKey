@@ -1,0 +1,34 @@
+
+#spring.profiles.active=cas-test
+
+
+#CAS
+#CAS????
+
+#CAS??????
+#CAS??????
+# ??????
+
+#??????
+#??????
+#??????
+
+server:
+  port: '10002'
+base:
+  url: 'http://cas.demo.maxkey.top:10002'
+cas:
+  server:
+    url: 'http://192.168.202.102:8080/sign/authz/cas'
+    host:
+      url: 'http://192.168.202.102:8080/sign/authz/cas'
+      login_url: '${cas.server.host.url}/login'
+      logout_url: '${cas.server.host.url}/logout?service=${app.server.host.url}'
+app:
+  casEnable: 'true'
+  server:
+    host:
+      url: 'http://192.168.202.102:${server.port}'
+      login_url: '/'
+      logout_url: '/logout'
+      web_url: 'http://192.168.202.102/index'

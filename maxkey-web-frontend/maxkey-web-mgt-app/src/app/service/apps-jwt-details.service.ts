@@ -28,7 +28,7 @@ import { BaseService } from './base.service';
 })
 export class AppsJwtDetailsService extends BaseService<AppsJwtDetails> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/apps/jwt');
+    super(_httpClient, '/admin/apps/jwt');
   }
 
   init(): Observable<Message<AppsJwtDetails>> {

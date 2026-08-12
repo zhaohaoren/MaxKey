@@ -26,6 +26,6 @@ import { BaseService } from './base.service';
 })
 export class RolesService extends BaseService<Roles> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/permissions/roles');
+    super(_httpClient, '/admin/permissions/roles');
   }
 }

@@ -29,10 +29,10 @@ import { BaseService } from './base.service';
 })
 export class AnalysisService extends BaseService<BaseEntity> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/analysis');
+    super(_httpClient, '/admin');
   }
 
   dashBoard(params: NzSafeAny): Observable<Message<BaseEntity>> {
-    return this.getByParams(params, '/dashboard');
+    return this.getByParams(params, '/admin/dashboard');
   }
 }

@@ -29,7 +29,7 @@ import {JobConfigFeild} from "../entity/JobConfigFeild";
 })
 export class SynchronizersService extends BaseService<Synchronizers> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/config/synchronizers');
+    super(_httpClient, '/admin/config/synchronizers');
   }
 
   synchr(synchrId: String): Observable<Message<Synchronizers>> {

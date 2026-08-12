@@ -27,6 +27,6 @@ import { BaseService } from './base.service';
 })
 export class ResourcesService extends BaseService<Resources> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/permissions/resources');
+    super(_httpClient, '/admin/permissions/resources');
   }
 }

@@ -28,10 +28,14 @@
 	
  	<!-- Application properties configs  -->
 	<bean id="propertySourcesPlaceholderConfigurer" class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
-	  <property name="locations">
-	    <list>
-	   	  	<value>classpath:application.properties</value>
-	    </list>
+	  <property name="properties">
+	    <bean class="org.springframework.beans.factory.config.YamlPropertiesFactoryBean">
+	      <property name="resources">
+	        <list>
+	          <value>classpath:application.yml</value>
+	        </list>
+	      </property>
+	    </bean>
 	  </property>
 	  <property name="ignoreUnresolvablePlaceholders" value="true"/>
 	</bean>

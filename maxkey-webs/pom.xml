@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Web 应用模块聚合 POM。 -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.dromara.maxkey</groupId>
+        <artifactId>MaxKey</artifactId>
+        <version>4.2.0</version>
+    </parent>
+    <artifactId>maxkey-webs</artifactId>
+    <packaging>pom</packaging>
+    <name>maxkey-webs</name>
+    <modules>
+        <module>maxkey-web-maxkey</module>
+        <module>maxkey-web-mgt</module>
+        <module>maxkey-web-openapi</module>
+        <module>maxkey-web-unified</module>
+    </modules>
+</project>

@@ -24,6 +24,6 @@ import { BaseService } from './base.service';
 })
 export class SmsProviderService extends BaseService<SmsProvider> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/config/smsprovider');
+    super(_httpClient, '/admin/config/smsprovider');
   }
 }

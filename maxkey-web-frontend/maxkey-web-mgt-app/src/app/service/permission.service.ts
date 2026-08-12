@@ -28,7 +28,7 @@ import { BaseService } from './base.service';
 })
 export class PermissionService extends BaseService<GroupMembers> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/permissions/permission');
+    super(_httpClient, '/admin/permissions/permission');
     this.server.urls.load = '/get';
   }
 }

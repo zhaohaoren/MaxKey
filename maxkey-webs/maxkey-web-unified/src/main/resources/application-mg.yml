@@ -1,0 +1,25 @@
+maxkey:
+  login:
+    captcha: ${LOGIN_CAPTCHA:true}
+    captcha.type: ${LOGIN_CAPTCHA:ARITHMETIC}
+    cas:
+      serverUrlPrefix: ${LOGIN_CAS_SERVER:http://sso.maxkey.top/sign/authz/cas}
+      service: ${LOGIN_CAS_SERVICE:http://mgt.maxkey.top/maxkey-mgt/passport/trust/auth}
+
+
+    mfa: false
+    remeberme: false
+    remeberme.validity: 0
+    wsfederation: false
+  server:
+    authz:
+      uri: https://${maxkey.server.domain}/maxkey
+    basedomain: ${SERVER_DOMAIN:maxkey.top}
+    default:
+      uri: ${maxkey.server.uri}/main
+    domain: sso.${maxkey.server.basedomain}
+    mgt:
+      uri: ${maxkey.server.uri}
+
+
+

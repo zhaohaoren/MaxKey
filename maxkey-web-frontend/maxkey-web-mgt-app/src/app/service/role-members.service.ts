@@ -30,7 +30,7 @@ import { BaseService } from './base.service';
 })
 export class RoleMembersService extends BaseService<RoleMembers> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/permissions/rolemembers');
+    super(_httpClient, '/admin/permissions/rolemembers');
     this.server.urls.member = '/memberInRole';
     this.server.urls.memberOut = '/memberNotInRole';
   }

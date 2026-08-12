@@ -29,26 +29,26 @@ import { BaseService } from './base.service';
 })
 export class HistoryService extends BaseService<BaseEntity> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/historys');
+    super(_httpClient, '/admin/historys');
   }
 
   public fetchConnector(params: NzSafeAny): Observable<Message<PageResults>> {
-    return this.fetch(params, '/historys/connectorHistory/fetch');
+    return this.fetch(params, '/admin/historys/connectorHistory/fetch');
   }
 
   public fetchLoginApps(params: NzSafeAny): Observable<Message<PageResults>> {
-    return this.fetch(params, '/historys/loginAppsHistory/fetch');
+    return this.fetch(params, '/admin/historys/loginAppsHistory/fetch');
   }
 
   public fetchLogin(params: NzSafeAny): Observable<Message<PageResults>> {
-    return this.fetch(params, '/historys/loginHistory/fetch');
+    return this.fetch(params, '/admin/historys/loginHistory/fetch');
   }
 
   public fetchSynchronizers(params: NzSafeAny): Observable<Message<PageResults>> {
-    return this.fetch(params, '/historys/synchronizerHistory/fetch');
+    return this.fetch(params, '/admin/historys/synchronizerHistory/fetch');
   }
 
   public fetchSystemLogs(params: NzSafeAny): Observable<Message<PageResults>> {
-    return this.fetch(params, '/historys/systemLogs/fetch');
+    return this.fetch(params, '/admin/historys/systemLogs/fetch');
   }
 }

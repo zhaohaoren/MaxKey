@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Commons 模块聚合 POM。 -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.dromara.maxkey</groupId>
+        <artifactId>MaxKey</artifactId>
+        <version>4.2.0</version>
+    </parent>
+
+    <artifactId>maxkey-commons</artifactId>
+    <packaging>pom</packaging>
+    <name>maxkey-commons</name>
+    <description>MaxKey 公共基础模块聚合项目</description>
+    <modules>
+        <module>maxkey-cache</module>
+        <module>maxkey-common</module>
+        <module>maxkey-core</module>
+        <module>maxkey-crypto</module>
+        <module>maxkey-ldap</module>
+    </modules>
+</project>

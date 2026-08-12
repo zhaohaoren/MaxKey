@@ -1,5 +1,5 @@
 # This config was automatically generated from your source code
-# Stacks detected: deps:java:.,deps:node:maxkey-web-frontend/maxkey-web-app,tool:gradle:
+# Stacks detected: deps:java:.,deps:node:maxkey-web-frontend/maxkey-web-app,tool:maven:
 version: 2.1
 orbs:
   node: circleci/node@5
@@ -39,26 +39,26 @@ jobs:
           destination: node-build
   test-java:
     docker:
-      - image: cimg/openjdk:17.0
+      - image: cimg/openjdk:21.0
     steps:
       - checkout
       - run:
           name: Calculate cache key
           command: |-
-            find . -name 'pom.xml' -o -name 'gradlew*' -o -name '*.gradle*' | \
+            find . -name 'pom.xml' -o -name 'mvnw*' | \
                     sort | xargs cat > /tmp/CIRCLECI_CACHE_KEY
       - restore_cache:
           key: cache-{{ checksum "/tmp/CIRCLECI_CACHE_KEY" }}
       - run:
-          command: ./gradlew check
+          command: mvn -B verify
       - store_test_results:
-          path: build/test-results
+          path: target/surefire-reports
       - save_cache:
           key: cache-{{ checksum "/tmp/CIRCLECI_CACHE_KEY" }}
           paths:
-            - ~/.gradle/caches
+            - ~/.m2/repository
       - store_artifacts:
-          path: build/reports
+          path: target/site
   deploy:
     # This is an example deploy job, not actually used by the workflow
     docker:

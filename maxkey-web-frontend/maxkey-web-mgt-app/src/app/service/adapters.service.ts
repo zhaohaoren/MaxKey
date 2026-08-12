@@ -28,6 +28,6 @@ import { BaseService } from './base.service';
 })
 export class AdaptersService extends BaseService<Adapters> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/config/adapters');
+    super(_httpClient, '/admin/config/adapters');
   }
 }

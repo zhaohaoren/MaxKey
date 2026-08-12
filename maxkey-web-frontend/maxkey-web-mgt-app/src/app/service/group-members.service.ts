@@ -29,7 +29,7 @@ import { BaseService } from './base.service';
 })
 export class GroupMembersService extends BaseService<GroupMembers> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/access/groupmembers');
+    super(_httpClient, '/admin/access/groupmembers');
     this.server.urls.member = '/memberIn';
     this.server.urls.memberOut = '/memberNotIn';
   }

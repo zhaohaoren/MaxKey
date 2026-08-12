@@ -28,7 +28,7 @@ import { BaseService } from './base.service';
 })
 export class AppsFormBasedDetailsService extends BaseService<AppsFormBasedDetails> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/apps/formbased');
+    super(_httpClient, '/admin/apps/formbased');
   }
 
   init(): Observable<Message<AppsFormBasedDetails>> {

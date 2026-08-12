@@ -25,6 +25,6 @@ import { BaseService } from './base.service';
 })
 export class LdapContextService extends BaseService<LdapContext> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/config/ldapcontext');
+    super(_httpClient, '/admin/config/ldapcontext');
   }
 }

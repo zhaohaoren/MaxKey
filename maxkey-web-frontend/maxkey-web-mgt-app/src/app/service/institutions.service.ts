@@ -30,6 +30,6 @@ import { BaseService } from './base.service';
 })
 export class InstitutionsService extends BaseService<Institutions> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/config/institutions');
+    super(_httpClient, '/admin/config/institutions');
   }
 }

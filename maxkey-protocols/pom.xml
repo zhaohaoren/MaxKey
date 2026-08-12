@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 协议模块聚合 POM。 -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.dromara.maxkey</groupId>
+        <artifactId>MaxKey</artifactId>
+        <version>4.2.0</version>
+    </parent>
+    <artifactId>maxkey-protocols</artifactId>
+    <packaging>pom</packaging>
+    <name>maxkey-protocols</name>
+    <modules>
+        <module>maxkey-protocol-authorize</module>
+        <module>maxkey-protocol-cas</module>
+        <module>maxkey-protocol-extendapi</module>
+        <module>maxkey-protocol-formbased</module>
+        <module>maxkey-protocol-jwt</module>
+        <module>maxkey-protocol-oauth-2.0</module>
+        <module>maxkey-protocol-saml-2.0</module>
+        <module>maxkey-protocol-tokenbased</module>
+    </modules>
+</project>

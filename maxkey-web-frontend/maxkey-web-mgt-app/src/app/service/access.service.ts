@@ -28,7 +28,7 @@ import { BaseService } from './base.service';
 })
 export class AccessService extends BaseService<GroupMembers> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/access/access');
+    super(_httpClient, '/admin/access/access');
     this.server.urls.member = '/appsInGroup';
     this.server.urls.memberOut = '/appsNotInGroup';
   }

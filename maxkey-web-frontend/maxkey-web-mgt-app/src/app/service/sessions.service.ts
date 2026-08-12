@@ -25,7 +25,7 @@ import { BaseService } from './base.service';
 })
 export class SessionsService extends BaseService<BaseEntity> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/access/session');
+    super(_httpClient, '/admin/access/session');
     this.server.urls.delete = '/terminate';
   }
 }

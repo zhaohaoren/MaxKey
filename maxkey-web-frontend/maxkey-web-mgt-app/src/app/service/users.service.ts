@@ -28,7 +28,7 @@ import { BaseService } from './base.service';
 })
 export class UsersService extends BaseService<Users> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/users');
+    super(_httpClient, '/admin/users');
   }
 
   generatePassword(params: NzSafeAny): Observable<Message<Users>> {

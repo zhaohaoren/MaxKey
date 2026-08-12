@@ -28,7 +28,7 @@ import { BaseService } from './base.service';
 })
 export class AppsExtendApiDetailsService extends BaseService<AppsExtendApiDetails> {
   constructor(private _httpClient: HttpClient) {
-    super(_httpClient, '/apps/extendapi');
+    super(_httpClient, '/admin/apps/extendapi');
   }
 
   init(): Observable<Message<AppsExtendApiDetails>> {
