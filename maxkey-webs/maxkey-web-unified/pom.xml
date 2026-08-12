@@ -15,14 +15,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.santuario</groupId>
-            <artifactId>xmlsec</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-quartz</artifactId>
         </dependency>
@@ -199,6 +191,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-freemarker</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+        </dependency>
         <!-- SAML 使用项目自带的 OpenSAML 2.x 兼容包，必须随统一可执行包发布。 -->
         <dependency>
             <groupId>org.dromara.maxkey.local</groupId>
@@ -340,6 +336,7 @@
     </dependencies>
 
     <build>
+        <finalName>maxkey-unified-boot-${project.version}-ga</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -347,7 +344,6 @@
                 <version>${springbootpluginVersion}</version>
                 <configuration>
                     <mainClass>org.dromara.maxkey.MaxKeyUnifiedApplication</mainClass>
-                    <finalName>maxkey-unified-boot-${project.version}-ga</finalName>
                     <layers>
                         <enabled>false</enabled>
                     </layers>

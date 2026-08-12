@@ -116,6 +116,7 @@
         <jakartatransactionapiVersion>2.0.1</jakartatransactionapiVersion>
         <jakartavalidationapiVersion>3.1.1</jakartavalidationapiVersion>
         <jakartaxmlbindapiVersion>4.0.5</jakartaxmlbindapiVersion>
+        <glassfishJaxbVersion>4.0.9</glassfishJaxbVersion>
         <angusmailVersion>2.0.5</angusmailVersion>
         <angusactivationVersion>2.0.2</angusactivationVersion>
         <xmlbindjaxbcoreVersion>3.0.2</xmlbindjaxbcoreVersion>
@@ -901,6 +902,11 @@
                 <groupId>jakarta.xml.bind</groupId>
                 <artifactId>jakarta.xml.bind-api</artifactId>
                 <version>${jakartaxmlbindapiVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>${glassfishJaxbVersion}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.angus</groupId>

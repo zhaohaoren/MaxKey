@@ -18,21 +18,16 @@
 // `ng build ---prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
-import { DelonMockModule } from '@delon/mock';
 import { Environment } from '@delon/theme';
-
-import * as MOCKDATA from '../../_mock';
 
 export const environment = {
   production: false,
   useHash: true,
   api: {
-    //baseUrl: 'http://sso.maxkey.top/sign/',
     baseUrl: 'http://localhost:9527/sign/',
     refreshTokenEnabled: true,
     refreshTokenType: 're-request'
-  },
-  modules: [DelonMockModule.forRoot({ data: MOCKDATA })]
+  }
 } as Environment;
 
 /*

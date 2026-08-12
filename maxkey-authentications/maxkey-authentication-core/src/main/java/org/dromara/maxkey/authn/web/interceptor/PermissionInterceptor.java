@@ -41,16 +41,32 @@ import jakarta.servlet.http.HttpServletResponse;
 public class PermissionInterceptor  implements AsyncHandlerInterceptor  {
     private static final Logger _logger = LoggerFactory.getLogger(PermissionInterceptor.class);
     //无需Interceptor url
+    final ApplicationConfig applicationConfig;
+
+    final SessionManager sessionManager;
+
+    final AuthTokenService authTokenService;
+
+    boolean mgmt;
+
     @Autowired
-    ApplicationConfig applicationConfig;
-    
-    @Autowired
-    SessionManager sessionManager;
-    
-    @Autowired
-    AuthTokenService authTokenService ;
-    
-    boolean mgmt = false;
+    public PermissionInterceptor(
+            ApplicationConfig applicationConfig,
+            SessionManager sessionManager,
+            AuthTokenService authTokenService) {
+        this(applicationConfig, sessionManager, authTokenService, false);
+    }
+
+    public PermissionInterceptor(
+            ApplicationConfig applicationConfig,
+            SessionManager sessionManager,
+            AuthTokenService authTokenService,
+            boolean mgmt) {
+        this.applicationConfig = applicationConfig;
+        this.sessionManager = sessionManager;
+        this.authTokenService = authTokenService;
+        this.mgmt = mgmt;
+    }
     
     /*
      * 请求前处理

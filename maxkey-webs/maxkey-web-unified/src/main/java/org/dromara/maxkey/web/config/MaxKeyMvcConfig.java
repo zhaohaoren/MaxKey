@@ -18,6 +18,8 @@
 package org.dromara.maxkey.web.config;
 
 import org.dromara.maxkey.authn.provider.AbstractAuthenticationProvider;
+import org.dromara.maxkey.authn.jwt.AuthTokenService;
+import org.dromara.maxkey.authn.session.SessionManager;
 import org.dromara.maxkey.authn.support.basic.BasicEntryPoint;
 import org.dromara.maxkey.authn.support.httpheader.HttpHeaderEntryPoint;
 import org.dromara.maxkey.authn.support.kerberos.HttpKerberosEntryPoint;
@@ -60,6 +62,12 @@ public class MaxKeyMvcConfig implements WebMvcConfigurer {
 
     @Autowired
     PermissionInterceptor permissionInterceptor;
+
+    @Autowired
+    SessionManager sessionManager;
+
+    @Autowired
+    AuthTokenService authTokenService;
 
     @Autowired
     SingleSignOnInterceptor singleSignOnInterceptor;
@@ -192,37 +200,11 @@ public class MaxKeyMvcConfig implements WebMvcConfigurer {
         //excludePathPatterns 表示改路径不用拦截
         logger.debug("add Interceptors");
 
-        permissionInterceptor.setMgmt(true);
-
-        registry.addInterceptor(permissionInterceptor)
-                .addPathPatterns("/dashboard/**")
-                .addPathPatterns("/orgs/**")
-                .addPathPatterns("/users/**")
-                .addPathPatterns("/apps/**")
-                .addPathPatterns("/session/**")
-                .addPathPatterns("/accounts/**")
-
-
-                .addPathPatterns("/access/**")
-                .addPathPatterns("/access/**/**")
-
-                .addPathPatterns("/permissions/**")
-                .addPathPatterns("/permissions/**/**")
-
-                .addPathPatterns("/config/**")
-                .addPathPatterns("/config/**/**")
-                .addPathPatterns("/config/**/**/**")
-
-                .addPathPatterns("/historys/**")
-                .addPathPatterns("/historys/**/**")
-
-                .addPathPatterns("/institutions/**")
-                .addPathPatterns("/localization/**")
-
-                .addPathPatterns("/file/upload/")
-
-                .addPathPatterns("/logout")
-                .addPathPatterns("/logout/**")
+        PermissionInterceptor managementPermissionInterceptor = new PermissionInterceptor(
+                applicationConfig, sessionManager, authTokenService, true);
+        registry.addInterceptor(managementPermissionInterceptor)
+                .addPathPatterns("/admin/**")
+                .excludePathPatterns("/admin/login/**")
         ;
 
         logger.debug("add Permission Adapter");

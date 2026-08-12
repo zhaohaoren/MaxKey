@@ -63,6 +63,19 @@
         <dependency><groupId>commons-logging</groupId><artifactId>commons-logging</artifactId></dependency>
         <dependency><groupId>commons-lang</groupId><artifactId>commons-lang</artifactId></dependency>
         <dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId></dependency>
+        <dependency>
+            <groupId>org.owasp.esapi</groupId>
+            <artifactId>esapi</artifactId>
+            <!-- OpenSAML uses ESAPI's core interfaces and encoder, not its legacy WAF stack. -->
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency><groupId>commons-httpclient</groupId><artifactId>commons-httpclient</artifactId></dependency>
+        <dependency><groupId>org.apache.santuario</groupId><artifactId>xmlsec</artifactId></dependency>
         <dependency><groupId>joda-time</groupId><artifactId>joda-time</artifactId></dependency>
         <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId></dependency>
         <dependency><groupId>jakarta.servlet</groupId><artifactId>jakarta.servlet-api</artifactId></dependency>
