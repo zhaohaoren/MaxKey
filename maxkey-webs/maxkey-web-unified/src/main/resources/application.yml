@@ -49,3 +49,9 @@ springdoc:
     path: /swagger-ui.html
     showExtensions: true
     tags-sorter: alpha
+
+logging:
+  level:
+    org.dromara.maxkey.persistence.mapper: DEBUG
+    org.mybatis: DEBUG
+    org.apache.ibatis: DEBUG

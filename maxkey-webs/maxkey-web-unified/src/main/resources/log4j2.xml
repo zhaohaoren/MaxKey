@@ -26,6 +26,8 @@
     	<Logger level="ERROR"	name="org.reflections.Reflections" ></Logger>
     	<Logger level="ERROR"   name="RocketmqRemoting" ></Logger>
     	<Logger level="OFF"     name="org.hibernate.validator.internal.util.Version" ></Logger>
+
+		<Logger level="DEBUG" name="org.dromara.maxkey.persistence.mapper"/>
     	
         <Root  level="INFO">  
             <AppenderRef  ref="consolePrint" />

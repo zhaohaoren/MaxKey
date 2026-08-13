@@ -204,6 +204,7 @@ public class MaxKeyMvcConfig implements WebMvcConfigurer {
                 applicationConfig, sessionManager, authTokenService, true);
         registry.addInterceptor(managementPermissionInterceptor)
                 .addPathPatterns("/admin/**")
+                .addPathPatterns("/file/upload/**")
                 .excludePathPatterns("/admin/login/**")
         ;
 

@@ -118,7 +118,7 @@ maxkey:
       uri: ${maxkey.server.uri}/appList
     domain: sso.${maxkey.server.basedomain}
     frontend:
-      uri: /maxkey
+      uri: http://localhost:8527/maxkey
     mgt:
       uri: ${maxkey.server.name}:9527/maxkey-mgt/login
     name: ${maxkey.server.scheme}://${maxkey.server.domain}
@@ -133,4 +133,3 @@ maxkey:
     description: MaxKey单点登录认证系统API文档
     title: MaxKey单点登录认证系统API文档
     version: ${application.formatted-version}
-

@@ -9,9 +9,9 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DATABASE_HOST:172.17.31.31}:${DATABASE_PORT:3306}/${DATABASE_NAME:snowx_iam}?allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
-    username: ${DATABASE_USER:snowxdev}
-    password: ${DATABASE_PWD:mysql123}
+    url: jdbc:mysql://${DATABASE_HOST:localhost}:${DATABASE_PORT:3306}/${DATABASE_NAME:snowx_iam}?allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: ${DATABASE_USER:root}
+    password: ${DATABASE_PWD:1234}
   redis:
     host: ${REDIS_HOST:172.17.31.31}
     jedis:
@@ -72,7 +72,6 @@ mybatis:
   table-column-snowflake-datacenter-id: 1
   table-column-snowflake-machine-id: 1
   type-aliases-package: org.dromara.maxkey.entity,org.dromara.maxkey.entity.apps,
-  configuration:
-      log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
 
 

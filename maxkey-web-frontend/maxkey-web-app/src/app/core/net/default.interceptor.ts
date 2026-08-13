@@ -284,7 +284,12 @@ export class DefaultInterceptor implements HttpInterceptor {
       url = baseUrl + (baseUrl.endsWith('/') && url.startsWith('/') ? url.substring(1) : url);
     }
 
-    const newReq = req.clone({ url, setHeaders: this.getAdditionalHeaders(req.headers) });
+    // 前端与后端端口不同，跨域请求必须携带 MaxKey 的 Session Cookie。
+    const newReq = req.clone({
+      url,
+      withCredentials: true,
+      setHeaders: this.getAdditionalHeaders(req.headers)
+    });
     return next.handle(newReq).pipe(
       mergeMap(ev => {
         // 允许统一对请求错误处理
