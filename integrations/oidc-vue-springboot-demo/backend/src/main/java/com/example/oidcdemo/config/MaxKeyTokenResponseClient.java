@@ -58,17 +58,25 @@ public class MaxKeyTokenResponseClient
                 throw new IllegalStateException("MaxKey Token request failed [" + code + "]: " + message);
             }
 
-            String accessToken = requiredString(values, OAuth2ParameterNames.ACCESS_TOKEN);
+            // MaxKey may serialize its token bean using camelCase fields and nest OIDC
+            // extensions (including id_token) under additionalInformation.
+            Map<String, Object> additionalInformation = objectMap(values.get("additionalInformation"));
+            if (additionalInformation != null) {
+                values.putAll(additionalInformation);
+            }
+
+            String accessToken = requiredString(values, OAuth2ParameterNames.ACCESS_TOKEN, "value");
             OAuth2AccessTokenResponse.Builder response = OAuth2AccessTokenResponse
                     .withToken(accessToken)
                     .tokenType(OAuth2AccessToken.TokenType.BEARER);
 
-            Object expiresIn = values.get(OAuth2ParameterNames.EXPIRES_IN);
+            Object expiresIn = firstValue(values, OAuth2ParameterNames.EXPIRES_IN, "expiresIn");
             if (expiresIn != null) {
                 response.expiresIn(Long.parseLong(String.valueOf(expiresIn)));
             }
-            if (values.get(OAuth2ParameterNames.REFRESH_TOKEN) != null) {
-                response.refreshToken(String.valueOf(values.get(OAuth2ParameterNames.REFRESH_TOKEN)));
+            Object refreshToken = firstValue(values, OAuth2ParameterNames.REFRESH_TOKEN, "refreshToken");
+            if (refreshToken != null) {
+                response.refreshToken(String.valueOf(refreshToken));
             }
             if (values.get(OAuth2ParameterNames.SCOPE) != null) {
                 response.scopes(scopeValues(values.get(OAuth2ParameterNames.SCOPE)));
@@ -79,6 +87,14 @@ public class MaxKeyTokenResponseClient
             values.remove(OAuth2ParameterNames.EXPIRES_IN);
             values.remove(OAuth2ParameterNames.REFRESH_TOKEN);
             values.remove(OAuth2ParameterNames.SCOPE);
+            values.remove("value");
+            values.remove("tokenType");
+            values.remove("expiresIn");
+            values.remove("refreshToken");
+            values.remove("additionalInformation");
+            values.remove("OAuth2Exception");
+            values.remove("expiration");
+            values.remove("expired");
             response.additionalParameters(values);
             return response.build();
         } catch (Exception ex) {
@@ -86,12 +102,21 @@ public class MaxKeyTokenResponseClient
         }
     }
 
-    private static String requiredString(Map<String, Object> values, String name) {
-        String value = stringValue(values.get(name), null);
+    private static String requiredString(Map<String, Object> values, String... names) {
+        String value = stringValue(firstValue(values, names), null);
         if (value == null || value.isBlank()) {
-            throw new IllegalStateException("Token response misses field: " + name);
+            throw new IllegalStateException("Token response misses field: " + String.join(" or ", names));
         }
         return value;
+    }
+
+    private static Object firstValue(Map<String, Object> values, String... names) {
+        for (String name : names) {
+            if (values.get(name) != null) {
+                return values.get(name);
+            }
+        }
+        return null;
     }
 
     private static String stringValue(Object value, String defaultValue) {

@@ -57,3 +57,4 @@ maxkey-web-frontend/maxkey-web-app/dist
 **/out/*
 /.sonarlint
 **/**/package-lock.json
+/integrations/oidc-vue-springboot-demo/frontend/node_modules/

@@ -72,6 +72,7 @@ public class WebXssRequestFilter  extends GenericFilterBean {
         skipParameterName.put("sharedSecret", "sharedSecret");
         skipParameterName.put("secret", "secret");
         skipParameterName.put("RelayState", "RelayState");
+        skipParameterName.put("state", "state");
     }
     
     @Override

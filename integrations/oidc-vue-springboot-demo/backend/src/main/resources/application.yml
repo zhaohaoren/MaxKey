@@ -11,8 +11,8 @@ spring:
       client:
         registration:
           maxkey:
-            client-id: ${MAXKEY_CLIENT_ID:1285345198733332480}
-            client-secret: ${MAXKEY_CLIENT_SECRET:T56yMTMwODIwMjYxODI0MDE1NjgULZ}
+            client-id: ${MAXKEY_CLIENT_ID:1285427541930172416}
+            client-secret: ${MAXKEY_CLIENT_SECRET:tBu5MTMwODIwMjYyMzUxMTM3MTY1jf}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
             redirect-uri: ${MAXKEY_REDIRECT_URI:http://localhost:5173/login/oauth2/code/maxkey}

@@ -41,7 +41,7 @@ export class AppsService extends BaseService<Apps> {
   }
 
   generateKeys(id: String, type: String): Observable<Message<Apps>> {
-    return this.getByParams({}, `/apps/generate/secret/${type}?id=${id}`);
+    return this.getByParams({}, `${this.server.urls.base}/generate/secret/${type}?id=${id}`);
   }
 
   updateExtendAttr(params: NzSafeAny): Observable<Message<PageResults>> {
