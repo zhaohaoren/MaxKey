@@ -20,21 +20,26 @@
  */
 package org.dromara.maxkey.authn.support.socialsignon;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import me.zhyd.oauth.request.AuthMaxkeyRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.maxkey.authn.LoginCredential;
 import org.dromara.maxkey.authn.annotation.CurrentUser;
 import org.dromara.maxkey.authn.jwt.AuthJwt;
 import org.dromara.maxkey.constants.ConstsLoginType;
+import org.dromara.maxkey.constants.ConstsStatus;
 import org.dromara.maxkey.entity.Message;
 import org.dromara.maxkey.entity.SocialsAssociate;
 import org.dromara.maxkey.entity.SocialsProvider;
 import org.dromara.maxkey.entity.idm.UserInfo;
 import org.dromara.maxkey.id.uuid.UUID;
+import org.dromara.maxkey.persistence.service.UserInfoService;
 import org.dromara.maxkey.web.WebContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -51,16 +56,52 @@ import java.util.Map;
 public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
     static final  Logger _logger = LoggerFactory.getLogger(SocialSignOnEndpoint.class);
 
+    @Autowired
+    UserInfoService userInfoService;
+
+    private String getFrontendUrl(HttpServletRequest request) {
+        String frontendUri = applicationConfig.getFrontendUri();
+        return frontendUri.startsWith("http")
+                ? frontendUri
+                : WebContext.getContextPath(request, false) + frontendUri;
+    }
+
+    private SocialsAssociate provisionFeishuUser(SocialsAssociate socialsAssociate) {
+        JSONObject feishuUser = JSON.parseObject(socialsAssociate.getSocialUserInfo());
+        UserInfo userInfo = new UserInfo();
+        userInfo.setId(userInfo.generateId());
+        userInfo.setUsername("feishu_" + socialsAssociate.getSocialUserId());
+        userInfo.setDisplayName(feishuUser.getString("name"));
+        userInfo.setNickName(feishuUser.getString("name"));
+        userInfo.setEmail(feishuUser.getString("email"));
+        userInfo.setPassword(userInfoService.randomPassword());
+        userInfo.setUserType("EMPLOYEE");
+        userInfo.setUserState("RESIDENT");
+        userInfo.setStatus(ConstsStatus.ACTIVE);
+        userInfo.setInstId(socialsAssociate.getInstId());
+
+        if (!userInfoService.insert(userInfo)) {
+            return null;
+        }
+
+        socialsAssociate.setUserId(userInfo.getId());
+        socialsAssociate.setUsername(userInfo.getUsername());
+        if (socialsAssociateService.insert(socialsAssociate)) {
+            return socialsAssociate;
+        }
+        userInfoService.delete(userInfo);
+        return null;
+    }
+
     @GetMapping("/authorize/{provider}")
     public Message<Object> authorize( HttpServletRequest request,@PathVariable String provider) {
         _logger.trace("SocialSignOn provider : {}" , provider);
         String instId = WebContext.getInst().getId();
-        String originURL =WebContext.getContextPath(request,false);
         String authorizationUrl =
                 buildAuthRequest(
                         instId,
                         provider,
-                        originURL + applicationConfig.getFrontendUri()
+                        getFrontendUrl(request)
                 ).authorize(authTokenService.genRandomJwt());
 
         _logger.trace("authorize SocialSignOn : {}" , authorizationUrl);
@@ -70,12 +111,12 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
     @GetMapping("/scanqrcode/{provider}")
     public Message<SocialsProvider> scanQRCode(HttpServletRequest request,@PathVariable String provider) {
         String instId = WebContext.getInst().getId();
-        String originURL =WebContext.getContextPath(request,false);
+        String frontendUrl = getFrontendUrl(request);
         AuthRequest authRequest = 
                 buildAuthRequest(
                         instId,
                         provider,
-                        originURL + applicationConfig.getFrontendUri());
+                        frontendUrl);
         SocialsProvider scanQrProvider = null;
         if(authRequest != null ) {
             String state = UUID.generate().toString();
@@ -87,7 +128,7 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
             scanQrProvider.setState(state);
             scanQrProvider.setRedirectUri(
                     socialSignOnProviderService.getRedirectUri(
-                            originURL + applicationConfig.getFrontendUri(), provider));
+                            frontendUrl, provider));
             //缓存state票据在缓存或者是redis中五分钟过期
             if (provider.equalsIgnoreCase(AuthMaxkeyRequest.KEY)) {
                 socialSignOnProviderService.setToken(state);
@@ -103,11 +144,10 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
     public Message<AuthJwt> bind(@PathVariable String provider,
                                   @CurrentUser UserInfo userInfo,
                                   HttpServletRequest request) {
-         //auth call back may exception 
+         //auth call back may exception
         try {
-            String originURL = WebContext.getContextPath(request,false);
             SocialsAssociate socialsAssociate = 
-                    this.authCallback(userInfo.getInstId(),provider,originURL + applicationConfig.getFrontendUri());
+                    this.authCallback(userInfo.getInstId(),provider,getFrontendUrl(request));
             socialsAssociate.setSocialUserInfo(accountJsonString);
             socialsAssociate.setUserId(userInfo.getId());
             socialsAssociate.setUsername(userInfo.getUsername());
@@ -124,20 +164,23 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
 
     @GetMapping("/callback/{provider}")
     public Message<AuthJwt> callback(@PathVariable String provider,HttpServletRequest request) {
-         //auth call back may exception 
+         //auth call back may exception
         try {
-            String originURL =WebContext.getContextPath(request,false);
             String instId = WebContext.getInst().getId();
             SocialsAssociate socialsAssociate = 
-                    this.authCallback(instId,provider,originURL + applicationConfig.getFrontendUri());
+                    this.authCallback(instId,provider,getFrontendUrl(request));
 
             SocialsAssociate socialssssociate1 = this.socialsAssociateService.get(socialsAssociate);
         
             _logger.debug("Loaded SocialSignOn Socials Associate : {}",socialssssociate1);
         
             if (null == socialssssociate1) {
+                if ("feishu".equalsIgnoreCase(provider)
+                        && StringUtils.isNotEmpty(socialsAssociate.getSocialUserInfo())) {
+                    socialssssociate1 = provisionFeishuUser(socialsAssociate);
+                }
                 //如果存在第三方ID并且在数据库无法找到映射关系，则进行绑定逻辑
-                if (StringUtils.isNotEmpty(socialsAssociate.getSocialUserId())) {
+                if (socialssssociate1 == null && StringUtils.isNotEmpty(socialsAssociate.getSocialUserId())) {
                     //返回message为第三方用户标识
                     return new Message<>(Message.PROMPT,socialsAssociate.getSocialUserId());
                 }

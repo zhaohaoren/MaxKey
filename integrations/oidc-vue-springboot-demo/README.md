@@ -2,6 +2,10 @@
 
 这个示例用于验证 MaxKey 的 OpenID Connect 登录流程：Vue 发起登录，Spring Boot 完成授权码回调、`id_token` 校验、UserInfo 获取和服务端 Session 保存。
 
+后端 OIDC 的配置项、完整时序、代码职责、MaxKey 页面填写方法和常见错误，请参阅：
+
+- [`backend/OIDC-INTEGRATION.md`](backend/OIDC-INTEGRATION.md)
+
 ## 1. 在 MaxKey 创建应用
 
 在统一服务的管理端新增应用：
@@ -16,6 +20,8 @@
 - Issuer：`http://localhost:9527/sign/maxkey`
 - Signature：`RS256`，点击生成密钥
 - UserInfo Response：`NORMAL`
+- 登录地址：`http://localhost:5173/oauth2/authorization/maxkey`
+- 扩展信息中的“引导”：`SP`
 - 应用状态：启用
 
 保存后记录 `client_id` 和 `client_secret`，并给测试用户授权访问该应用。

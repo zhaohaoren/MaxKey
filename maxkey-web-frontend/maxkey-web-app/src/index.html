@@ -152,23 +152,20 @@
 <script type="text/javascript">
   appendScriptSrc(location.protocol+"//g.alicdn.com/dingding/dinglogin/0.0.5/ddLogin.js");
   var ddredirect_uri = "";
-  var handleMessage = function (event) {
+  var handleDingTalkMessage = function (event) {
     var origin = event.origin;
     console.log("ding handleMessage origin "+origin);
-    console.log("typeof loginTmpCode " + (typeof loginTmpCode));
+    var loginTmpCode = event.data;
     if (typeof loginTmpCode === "string" && origin.indexOf("//login.dingtalk.com")>-1) { //判断是否来自ddLogin扫码事件。
-      var loginTmpCode = event.data;
       ddredirect_uri = ddredirect_uri + '&loginTmpCode=' + loginTmpCode;
       //获取到loginTmpCode后就可以在这里构造跳转链接进行跳转了
       window.top.location.href = ddredirect_uri;
-    }else {
-        console.log("loginTmpCode " + JSON.parse(loginTmpCode));
     }
   };
   if (typeof window.addEventListener != 'undefined') {
-    window.addEventListener('message', handleMessage, false);
+    window.addEventListener('message', handleDingTalkMessage, false);
   } else if (typeof window.attachEvent != 'undefined') {
-    window.attachEvent('onmessage', handleMessage);
+    window.attachEvent('onmessage', handleDingTalkMessage);
   }
 </script>
 
@@ -177,22 +174,26 @@
   appendScriptSrc(location.protocol+"//lf-package-cn.feishucdn.com/obj/feishu-static/lark/passport/qrcode/LarkSSOSDKWebQRCode-1.0.3.js");
   var fsredirectUri = "";
   var QRLoginObj;
-  var handleMessage = function (event) {
+  var handleFeishuMessage = function (event) {
     var origin = event.origin;
     console.log("feishu handleMessage origin "+origin);
-    // 使用 matchOrigin 方法来判断 message 是否来自飞书页面
-    if (QRLoginObj && QRLoginObj.matchOrigin(origin)) {
-      var loginTmpCode = event.data;
-      // 在授权页面地址上拼接上参数 tmp_code，并跳转
-      fsredirectUri = fsredirectUri + "&tmp_code=" + loginTmpCode;
-      window.top.location.href = fsredirectUri;
+    var qrIframe = document.querySelector('#div_qrcodelogin iframe');
+    // Feishu sends { source: "qrcode", tmp_code: "..." } after confirmation.
+    if (QRLoginObj
+      && qrIframe
+      && event.source === qrIframe.contentWindow
+      && QRLoginObj.matchOrigin(origin)
+      && QRLoginObj.matchData(event.data)) {
+      var authorizationUrl = new URL(fsredirectUri);
+      authorizationUrl.searchParams.set('tmp_code', event.data.tmp_code);
+      window.top.location.href = authorizationUrl.toString();
     }
   };
   if (typeof window.addEventListener != 'undefined') {
-    window.addEventListener('message', handleMessage, false);
+    window.addEventListener('message', handleFeishuMessage, false);
   }
   else if (typeof window.attachEvent != 'undefined') {
-    window.attachEvent('onmessage', handleMessage);
+    window.attachEvent('onmessage', handleFeishuMessage);
   }
 </script>
 

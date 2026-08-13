@@ -1,36 +1,62 @@
 server:
+  # Spring Boot 后端监听端口。开发环境中 Vue 的 Vite 代理会把 OIDC 和 API 请求转发到该端口。
   port: ${SERVER_PORT:8088}
+  # 部署在 Nginx、Ingress 等反向代理后时，使用 X-Forwarded-* 头还原外部协议、域名和端口。
+  # 这会影响 Spring Security 生成 redirect_uri，生产环境中尤其重要。
   forward-headers-strategy: framework
 
 spring:
   application:
+    # Spring Boot 应用名，主要用于日志、监控和配置中心标识，不参与 OIDC 协议。
     name: oidc-vue-springboot-demo
   security:
     oauth2:
-      # 本示例在 Java 配置中手动构造 ClientRegistration，避免 MaxKey 的 Discovery 路径与标准 issuer 路径不一致。
+      # 这里声明“本系统作为 OIDC Client”的注册信息。
+      # 本示例没有完全使用 Spring Boot 自动配置，而是在 SecurityConfiguration 中读取这些值并手动构造 ClientRegistration。
       client:
         registration:
+          # 注册名 maxkey 会成为 Spring Security 登录入口的一部分：
+          # /oauth2/authorization/maxkey 和 /login/oauth2/code/maxkey。
           maxkey:
+            # MaxKey 分配给 DemoTest 的公开标识。它也会成为 id_token 的 audience(aud)。
             client-id: ${MAXKEY_CLIENT_ID:1285427541930172416}
+            # 机密客户端凭证，仅允许保存在后端。生产环境必须通过环境变量注入，绝不能放进 Vue 或提交真实生产密钥。
             client-secret: ${MAXKEY_CLIENT_SECRET:tBu5MTMwODIwMjYyMzUxMTM3MTY1jf}
+            # 换取 Token 时，将 client_id/client_secret 放在 application/x-www-form-urlencoded 请求体中。
+            # MaxKey 当前接口按此方式对接；其他 Provider 也可能要求 client_secret_basic。
             client-authentication-method: client_secret_post
+            # 授权码模式：浏览器只拿一次性 code，后端再使用 code + secret 换 Token。
+            # 适用于拥有 Spring Boot 后端的 Web 应用。
             authorization-grant-type: authorization_code
+            # MaxKey 登录完成后的回调地址，必须与 MaxKey 管理端“回调地址”完全一致。
+            # 本地开发时 5173 的 /login 路径由 Vite 代理给 8088，实际由 Spring Security 处理。
             redirect-uri: ${MAXKEY_REDIRECT_URI:http://localhost:5173/login/oauth2/code/maxkey}
+            # openid 是从 OAuth 2.0 升级为 OIDC 的必要 scope；没有它就不会得到 id_token。
+            # profile/email 请求姓名、昵称、邮箱等标准 Claims，但最终返回内容仍取决于 MaxKey 的授权策略。
             scope:
               - openid
               - profile
               - email
 
 demo:
+  # OIDC 登录成功或本地注销后返回的 Vue 首页，不属于 OIDC Provider 元数据。
   frontend-url: ${DEMO_FRONTEND_URL:http://localhost:5173}
   oidc:
+    # Token 签发者。Spring Security 会校验 id_token.iss 必须与它完全一致。
     issuer: ${MAXKEY_ISSUER:http://localhost:9527/sign/maxkey}
+    # 浏览器进行用户登录、授权并取得 authorization code 的端点。
     authorization-uri: ${MAXKEY_AUTHORIZATION_URI:http://localhost:9527/sign/authz/oauth/v20/authorize}
+    # Spring Boot 在服务端用 authorization code 换 access_token/id_token 的端点。
     token-uri: ${MAXKEY_TOKEN_URI:http://localhost:9527/sign/authz/oauth/v20/token}
+    # Spring Boot 携带 access_token 查询用户信息的端点，用于补充 id_token 中的 Claims。
     user-info-uri: ${MAXKEY_USER_INFO_URI:http://localhost:9527/sign/api/connect/v10/userinfo}
+    # MaxKey 发布 RSA 公钥的端点。Spring Security 使用公钥验证 id_token 的 RS256 签名。
+    # SecurityConfiguration 会追加 client_id 查询参数，因为 MaxKey 按应用返回对应公钥。
     jwk-set-uri: ${MAXKEY_JWK_SET_URI:http://localhost:9527/sign/authz/oauth/v20/jwks}
 
 logging:
   level:
+    # INFO 能看到主要认证事件；排障时可临时改为 DEBUG，但生产环境不建议长期开启以免记录敏感上下文。
     org.springframework.security: INFO
+    # 本 Demo 自己的日志级别。
     com.example.oidcdemo: DEBUG

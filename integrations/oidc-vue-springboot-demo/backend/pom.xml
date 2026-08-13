@@ -22,18 +22,22 @@
     </properties>
 
     <dependencies>
+        <!-- 提供 Spring MVC、内嵌 Tomcat 和 /api/* REST 接口。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <!-- 提供 SecurityFilterChain、服务端 Session 认证和访问控制。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
+        <!-- OIDC/OAuth2 Client 核心：授权码跳转、回调、Token 交换、ID Token 校验和 UserInfo。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-client</artifactId>
         </dependency>
+        <!-- 以下两个依赖只用于自动化测试，不会进入生产运行时。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

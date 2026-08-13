@@ -20,6 +20,7 @@
  */
 package org.dromara.maxkey.authn.support.socialsignon;
 
+import com.alibaba.fastjson.JSON;
 import org.dromara.maxkey.authn.jwt.AuthTokenService;
 import org.dromara.maxkey.authn.provider.AbstractAuthenticationProvider;
 import org.dromara.maxkey.authn.support.socialsignon.service.SocialSignOnProviderService;
@@ -35,6 +36,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import me.zhyd.oauth.model.AuthCallback;
 import me.zhyd.oauth.model.AuthResponse;
+import me.zhyd.oauth.model.AuthUser;
 import me.zhyd.oauth.request.AuthRequest;
 
 /**
@@ -47,7 +49,7 @@ public class AbstractSocialSignOnEndpoint {
     protected AuthRequest authRequest;
     
     protected String accountJsonString;
-    
+
     @Autowired
     protected SocialSignOnProviderService socialSignOnProviderService;
     
@@ -108,10 +110,16 @@ public class AbstractSocialSignOnEndpoint {
           
           AuthResponse<?> authResponse=authRequest.login(authCallback);
           _logger.debug("Response  : {}" , authResponse.getData());
+          String socialUserInfo = null;
+          if (authResponse.getData() instanceof AuthUser authUser) {
+              socialUserInfo = JSON.toJSONString(authUser.getRawUserInfo());
+              accountJsonString = socialUserInfo;
+          }
           String socialUserId = socialSignOnProviderService.getAccountId(provider, authResponse);
           socialsAssociate =new SocialsAssociate();
         socialsAssociate.setProvider(provider);
         socialsAssociate.setSocialUserId(socialUserId);
+        socialsAssociate.setSocialUserInfo(socialUserInfo);
         socialsAssociate.setInstId(instId);
         
          return socialsAssociate;
