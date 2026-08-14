@@ -6,9 +6,6 @@ docker rmi maxkeytop/maxkey-nginx
 #maxkey-frontend
 docker rmi maxkeytop/maxkey-frontend
 
-#maxkey-mgt-frontend
-docker rmi maxkeytop/maxkey-mgt-frontend
-
 #maxkey
 docker rmi maxkeytop/maxkey  
 

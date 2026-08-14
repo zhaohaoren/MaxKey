@@ -42,13 +42,6 @@ docker 	run -p 8527:8527  \
 --network maxkey.top \
 -d maxkeytop/maxkey-frontend:latest 
 
-#maxkey-mgt-frontend
-docker 	run -p 8526:8526  \
---name maxkey-mgt-frontend \
---hostname maxkey-mgt-frontend \
---network maxkey.top \
--d maxkeytop/maxkey-mgt-frontend:latest 
-
 #maxkey-nginx proxy
 docker 	run -p 80:80  \
 --name maxkey-nginx \

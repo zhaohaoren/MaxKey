@@ -23,7 +23,8 @@ services:
       - maxkey.top
     
   maxkey-frontend:
-    image: maxkeytop/maxkey-frontend:latest
+    build: ../../maxkey-web-frontend/maxkey-web-vue-app
+    image: maxkeytop/maxkey-frontend-vue:local
     container_name: maxkey-frontend
     hostname: maxkey-frontend
     environment:
@@ -61,17 +62,6 @@ services:
       - LOGIN_CAS_SERVER=http://maxkey-nginx/sign/authz/cas
     ports:
       - "9526:9526"
-    networks:
-      - maxkey.top
-      
-  maxkey-mgt-frontend:
-    image: maxkeytop/maxkey-mgt-frontend:latest
-    container_name: maxkey-mgt-frontend
-    hostname: maxkey-mgt-frontend
-    environment:
-      - TZ=Asia/Shanghai
-    ports:
-      - "8526:8526"
     networks:
       - maxkey.top
       

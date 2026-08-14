@@ -62,9 +62,12 @@ public class FeishuUsersService extends AbstractSynchronizerService implements I
                 headers.put("Authorization", AuthorizationHeaderUtils.createBearer(access_token));
                 String responseBody = request.get(String.format(USERS_URL,relatedOrg.getOriginId()),headers);
                 FeishuUsersResponse usersResponse  =JsonUtils.stringToObject(responseBody, FeishuUsersResponse.class);
-                _logger.trace("response : " + responseBody);
+                // ######&& 打印飞书用户接口返回信息，便于核对字段映射。
+                _logger.info("######&& 飞书用户接口响应：departmentId={}, response={}",
+                        relatedOrg.getOriginId(), responseBody);
                 if(usersResponse.getCode() == 0 && usersResponse.getData().getItems() != null) {
                     for(FeishuUsers feiShuUser : usersResponse.getData().getItems()) {
+                        _logger.info("######&& 飞书用户对象：{}", feiShuUser);
                         UserInfo userInfo  = buildUserInfoByFieldMapper(feiShuUser,relatedOrg);
                         _logger.debug("userInfo : " + userInfo);
                         userInfo.setPassword(userInfo.getUsername() + UserInfo.DEFAULT_PASSWORD_SUFFIX);
@@ -115,7 +118,7 @@ public class FeishuUsersService extends AbstractSynchronizerService implements I
         userInfo.setDisplayName(user.getName());//名字
         
         userInfo.setMobile(user.getMobile());//手机
-        userInfo.setEmail(user.getEmail());
+        userInfo.setEmail(resolveEmail(user));
         userInfo.setGender(user.getGender());
         
         userInfo.setEmployeeNumber(user.getEmployee_no());
@@ -155,8 +158,14 @@ public class FeishuUsersService extends AbstractSynchronizerService implements I
                     }
                     continue;
                 }
+                // ######&& 飞书可能只返回企业邮箱，映射到 MaxKey 邮箱字段时使用企业邮箱兜底。
+                if ("email".equals(sourceProperty)) {
+                    sourceValue = resolveEmail(user);
+                }
                 if (hasField(user.getClass(), sourceProperty)) {
-                    sourceValue = getFieldValue(user, sourceProperty);
+                    if (sourceValue == null) {
+                        sourceValue = getFieldValue(user, sourceProperty);
+                    }
                 }
                 else if (hasField(SynchroRelated.class, sourceProperty)) {
                     sourceValue = getFieldValue(relatedOrg, sourceProperty);
@@ -183,6 +192,13 @@ public class FeishuUsersService extends AbstractSynchronizerService implements I
             e.printStackTrace();
         }
         return userInfo;
+    }
+
+    private String resolveEmail(FeishuUsers user) {
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            return user.getEmail();
+        }
+        return user.getEnterprise_email();
     }
 
     public Map<String,String> getFiledMap(Long jobId){

@@ -13,11 +13,8 @@ docker pull maxkeytop/maxkey:latest
 #maxkey-mgt
 docker pull maxkeytop/maxkey-mgt:latest
 
-#maxkey-frontend
-docker pull maxkeytop/maxkey-frontend:latest
-
-#maxkey-mgt-frontend
-docker pull maxkeytop/maxkey-mgt-frontend:latest
+#maxkey-frontend，构建统一 Vue 前端镜像
+docker build -f ../../maxkey-web-frontend/maxkey-web-vue-app/Dockerfile -t maxkeytop/maxkey-frontend:latest ../../maxkey-web-frontend/maxkey-web-vue-app
 
 #maxkey-nginx proxy
 cd docker-nginx

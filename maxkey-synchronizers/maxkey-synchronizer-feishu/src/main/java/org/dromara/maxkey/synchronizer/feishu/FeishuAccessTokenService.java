@@ -55,11 +55,21 @@ public class FeishuAccessTokenService {
         String responseBody = request.post(TOKEN_URL, parameterMap,null);
         
         AccessToken accessToken = JsonUtils.stringToObject(responseBody, AccessToken.class);
-        _logger.debug("accessToken " + accessToken);
+        // ######&& 飞书 Token 响应中包含敏感 Token，只打印脱敏后的原始响应。
+        _logger.info("######&& 飞书 Token 响应：{}", maskSensitiveFields(responseBody));
         if(accessToken.getErrcode()== 0){
             return accessToken.getTenant_access_token();
         }
         return "";
+    }
+
+    private String maskSensitiveFields(String responseBody) {
+        if (responseBody == null) {
+            return null;
+        }
+        return responseBody.replaceAll(
+                "(\\\"(?:app_secret|tenant_access_token|access_token)\\\"\\s*:\\s*\\\")[^\\\"]*(\\\")",
+                "$1***$2");
     }
     
     

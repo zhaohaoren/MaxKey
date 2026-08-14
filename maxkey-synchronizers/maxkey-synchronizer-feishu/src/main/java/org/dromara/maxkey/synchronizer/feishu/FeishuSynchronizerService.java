@@ -48,6 +48,8 @@ public class FeishuSynchronizerService  implements ISynchronizerService{
         feishuAccessTokenService.setAppId(synchronizer.getPrincipal());
         feishuAccessTokenService.setAppSecret(synchronizer.getCredentials());
         String access_token=feishuAccessTokenService.requestToken();
+        _logger.info("######&& 飞书同步已取得租户 Token：tokenPresent={}",
+                access_token != null && !access_token.isBlank());
         
         feishuOrganizationService.setSynchronizer(synchronizer);
         feishuOrganizationService.setAccess_token(access_token);

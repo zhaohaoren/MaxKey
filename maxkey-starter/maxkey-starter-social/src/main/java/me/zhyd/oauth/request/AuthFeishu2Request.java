@@ -1,19 +1,19 @@
 /*
  * Copyright [2022] [MaxKey of copyright http://www.maxkey.top]
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 
 package me.zhyd.oauth.request;
 
@@ -34,6 +34,8 @@ import me.zhyd.oauth.utils.GlobalAuthUtils;
 import me.zhyd.oauth.utils.HttpUtils;
 import me.zhyd.oauth.utils.StringUtils;
 import me.zhyd.oauth.utils.UrlBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 飞书平台，企业自建应用授权登录，
@@ -47,6 +49,8 @@ import me.zhyd.oauth.utils.UrlBuilder;
  * @since 1.15.9
  */
 public class AuthFeishu2Request extends AuthDefaultRequest {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthFeishu2Request.class);
 
     public AuthFeishu2Request(AuthConfig config) {
         super(config, AuthMxkDefaultSource.FEISHU2);
@@ -103,16 +107,22 @@ public class AuthFeishu2Request extends AuthDefaultRequest {
         String response = new HttpUtils(config.getHttpConfig()).get(source.userInfo(), null, new HttpHeader()
             .add("Content-Type", "application/json")
             .add("Authorization", "Bearer " + accessToken), false).getBody();
+        log.info("######&& feishu user info response: {}", response);
         JSONObject object = JSON.parseObject(response);
         this.checkResponse(object);
         JSONObject data = object;//.getJSONObject("data");
+        // ######&& 飞书可能只返回企业邮箱，社交登录时使用 enterprise_email 兜底。
+        String email = data.getString("email");
+        if (StringUtils.isEmpty(email)) {
+            email = data.getString("enterprise_email");
+        }
         return AuthUser.builder()
             .rawUserInfo(object)
             .uuid(data.getString("union_id"))
             .username(data.getString("name"))
             .nickname(data.getString("name"))
             .avatar(data.getString("avatar_url"))
-            .email(data.getString("email"))
+            .email(email)
             .gender(AuthUserGender.UNKNOWN)
             .token(authToken)
             .source(source.toString())

@@ -6,9 +6,6 @@ docker stop maxkey-nginx
 #maxkey-frontend
 docker stop maxkey-frontend
 
-#maxkey-mgt-frontend
-docker stop maxkey-mgt-frontend
-
 #maxkey
 docker stop maxkey  
 

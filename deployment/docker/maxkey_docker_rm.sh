@@ -8,9 +8,6 @@ docker rm maxkey-nginx
 #maxkey-frontend
 docker rm maxkey-frontend
 
-#maxkey-mgt-frontend
-docker rm maxkey-mgt-frontend
-
 #maxkey
 docker rm maxkey  
 

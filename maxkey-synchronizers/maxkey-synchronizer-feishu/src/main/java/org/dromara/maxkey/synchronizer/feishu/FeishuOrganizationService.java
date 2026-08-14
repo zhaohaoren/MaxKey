@@ -78,6 +78,7 @@ public class FeishuOrganizationService extends AbstractSynchronizerService imple
                                  dept.getName(),
                                  dept.getOpen_department_id()
                                  );
+                        _logger.info("######&& 飞书部门对象：{}", dept);
                         deptsQueue.add(dept.getOpen_department_id());
                         //synchro Related
                         SynchroRelated synchroRelated = 
@@ -118,7 +119,8 @@ public class FeishuOrganizationService extends AbstractSynchronizerService imple
         String responseBody = request.get(String.format(DEPTS_URL, deptId),headers);
         FeishuDeptsResponse deptsResponse  =JsonUtils.stringToObject(responseBody, FeishuDeptsResponse.class);
         
-        _logger.trace("response : " + responseBody);
+        // ######&& 打印飞书部门列表接口返回信息，便于核对组织字段映射。
+        _logger.info("######&& 飞书部门列表接口响应：departmentId={}, response={}", deptId, responseBody);
 
         return deptsResponse;
     }
@@ -130,7 +132,8 @@ public class FeishuOrganizationService extends AbstractSynchronizerService imple
         String responseBody = request.get(String.format(url, deptId),headers);
         FeishuDeptsResponse deptsResponse  =JsonUtils.stringToObject(responseBody, FeishuDeptsResponse.class);
         
-        _logger.trace("response : " + responseBody);
+        // ######&& 打印飞书部门详情接口返回信息，便于核对根部门数据。
+        _logger.info("######&& 飞书部门详情接口响应：departmentId={}, response={}", deptId, responseBody);
 
         return deptsResponse;
     }

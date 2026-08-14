@@ -1,0 +1,73 @@
+html, body, #app { min-height: 100%; }
+html { background: #f5f7fa; }
+body { margin: 0; color: rgba(0, 0, 0, .85); background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; }
+a { color: inherit; }
+
+.alain-default { position: relative; min-height: 100vh; overflow-x: hidden; background: #f5f7fa; }
+.alain-default__header { position: fixed; z-index: 100; top: 0; right: 0; left: 0; display: flex; height: 64px; align-items: center; justify-content: space-between; padding: 0 24px; color: rgba(0, 0, 0, .85); background: #fff; box-shadow: 0 1px 10px rgba(0, 0, 0, .2); }
+.alain-default__header-brand, .alain-default__header-actions { display: flex; align-items: center; }
+.alain-default__header-title { display: flex; height: 64px; align-items: center; color: #000; font-size: 18px; font-weight: 600; text-decoration: none; }
+.alain-default__header-title img { width: 44px; height: 44px; margin-right: 12px; object-fit: contain; }
+.alain-default__header-title b { color: #000099; }
+.alain-default__header-title strong { color: #ffd700; }
+.header-link, .header-button { margin-left: 20px; color: rgba(0, 0, 0, .65); font-size: 14px; text-decoration: none; }
+.header-link:hover { color: #1890ff; }
+.header-button { padding: 0; border: 0; background: transparent; cursor: pointer; }
+.header-user { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.alain-default__sidebar { position: fixed; z-index: 99; top: 64px; bottom: 0; left: 0; width: 200px; overflow-y: auto; color: rgba(255, 255, 255, .65); background: #212529; transition: width .2s; }
+.alain-default__sidebar.collapsed { width: 64px; }
+.sidebar-toggle { display: block; width: 100%; height: 36px; border: 0; color: rgba(255, 255, 255, .65); background: transparent; cursor: pointer; text-align: right; padding-right: 20px; }
+.sidebar-nav__item { display: flex; min-height: 38px; align-items: center; gap: 12px; width: 100%; padding: 0 24px; border: 0; color: rgba(255, 255, 255, .65); background: transparent; cursor: pointer; font-size: 14px; text-align: left; text-decoration: none; }
+.sidebar-nav__item:hover, .sidebar-nav__item.selected { color: #1890ff; background: #30363d; }
+.sidebar-nav__group { justify-content: flex-start; }
+.sidebar-nav__group span:last-child { margin-left: auto; }
+.sidebar-nav__icon { width: 14px; color: #1890ff; text-align: center; }
+.sidebar-nav__children .sidebar-nav__item { padding-left: 50px; font-size: 13px; }
+.alain-default__collapsed .sidebar-nav__item { justify-content: center; padding: 0; }
+.alain-default__collapsed .sidebar-nav__icon { width: auto; }
+
+.alain-default__content { min-height: calc(100vh - 184px); margin: 64px 24px 0 224px; padding: 24px 0; transition: margin-left .2s; }
+.alain-default__collapsed .alain-default__content { margin-left: 88px; }
+.alain-default__content-title { display: flex; min-height: 52px; align-items: center; justify-content: space-between; margin: -24px 0 24px; padding: 18px 24px; border-bottom: 1px solid #efe3e5; background: #fafbfc; }
+.alain-default__content-title h1 { margin: 0; color: #929292; font-size: 18px; font-weight: 400; }
+.alain-default__content-title h1 small { display: block; margin-top: 4px; color: #b0b0b0; font-size: 12px; }
+.alain-default__footer { min-height: 120px; margin-left: 224px; padding: 30px 24px; border-top: 1px solid #e5e5e5; color: #777; background: #fff; text-align: center; text-shadow: 0 1px 0 #fff; transition: margin-left .2s; }
+.alain-default__collapsed + .alain-default__footer { margin-left: 88px; }
+.portal-app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; }
+.portal-app-card { cursor: pointer; }
+.admin-page-card { min-height: 260px; }
+.page-loading { padding: 64px; color: rgba(0, 0, 0, .45); text-align: center; }
+.ant-alert { margin-bottom: 24px; }
+
+.passport-page { min-height: 100vh; background: #fff; }
+.passport-container { display: flex; min-height: 100vh; flex-direction: column; }
+.passport-header { display: flex; min-height: 60px; align-items: center; border-bottom: 1px solid #e5e5e5; padding: 0 24px; text-shadow: 0 1px 0 #fff; }
+.passport-header .logo { width: 44px; height: 44px; margin-right: 16px; object-fit: contain; }
+.passport-header .title { color: #000; font-size: 28px; font-weight: 600; }
+.passport-header .title b { color: #000099; }
+.passport-header .title strong { color: #ffd700; }
+.passport-wrap { flex: 1; padding: 32px 0 24px; }
+.passport-top { margin: 12px 0 40px; font-size: 17px; text-align: center; }
+.passport-footer { min-height: 60px; border-top: 1px solid #e5e5e5; padding: 20px; color: #777; text-align: center; text-shadow: 0 1px 0 #fff; }
+.login-panel { width: 368px; margin: 0 auto; }
+.login-panel h1 { margin-bottom: 24px; text-align: center; }
+.login-panel .login-other { margin-top: 24px; color: rgba(0, 0, 0, .45); text-align: center; }
+.login-panel .login-other .icon { margin-left: 12px; cursor: pointer; vertical-align: middle; }
+.login-tabs { display: flex; width: 100%; margin-bottom: 24px; }
+.login-tabs .ant-radio-button-wrapper { flex: 1; text-align: center; }
+.login-alert { margin-bottom: 24px; }
+.login-options { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.qrcode-placeholder { display: grid; height: 220px; margin-bottom: 24px; place-items: center; background: #fff; color: rgba(0, 0, 0, .45); }
+.social-icon { width: 32px; height: 32px; margin-left: 12px; cursor: pointer; vertical-align: middle; }
+.login-panel .captcha { max-width: 100px; height: 32px; cursor: pointer; object-fit: contain; }
+
+@media (max-width: 768px) {
+  .alain-default__sidebar { width: 64px; }
+  .sidebar-nav__item { justify-content: center; padding: 0; }
+  .sidebar-nav__item span:not(.sidebar-nav__icon) { display: none; }
+  .alain-default__content, .alain-default__collapsed .alain-default__content { margin-left: 88px; }
+  .alain-default__footer, .alain-default__collapsed + .alain-default__footer { margin-left: 88px; }
+  .header-user { display: none; }
+  .login-panel { width: calc(100% - 48px); }
+}
