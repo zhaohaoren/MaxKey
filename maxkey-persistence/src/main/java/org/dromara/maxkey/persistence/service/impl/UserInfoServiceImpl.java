@@ -22,6 +22,7 @@ import java.sql.Types;
 import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
+import org.dromara.maxkey.constants.ConstsPasswordSetType;
 import org.dromara.maxkey.constants.ConstsStatus;
 import org.dromara.maxkey.crypto.password.PasswordReciprocal;
 import org.dromara.maxkey.entity.Accounts;
@@ -164,6 +165,11 @@ public class UserInfoServiceImpl extends JpaServiceImpl<UserInfoMapper,UserInfo,
     }
 
     @Override
+    public boolean updatePasswordSetType(UserInfo userInfo) {
+        return getMapper().updatePasswordSetType(userInfo) > 0;
+    }
+
+    @Override
     public UserInfo findByUsername(String username) {
         return getMapper().findByUsername(username);
     }
@@ -231,27 +237,35 @@ public class UserInfoServiceImpl extends JpaServiceImpl<UserInfoMapper,UserInfo,
         try {
             WebContext.setAttribute(PasswordPolicyValidatorServiceImpl.PASSWORD_POLICY_VALIDATE_RESULT, "");
             UserInfo userInfo = this.findByUsername(changePassword.getUsername());
-            if(changePassword.getPassword().equals(changePassword.getConfirmPassword())){
-                if(StringUtils.isNotBlank(changePassword.getOldPassword()) &&
-                        passwordEncoder.matches(changePassword.getOldPassword(), userInfo.getPassword())){
-                    if(changePassword(changePassword,true) ){
-                        return true;
-                    }
-                    return false;                   
-                }else {
-                    if(StringUtils.isNotBlank(changePassword.getOldPassword())&&
-                            passwordEncoder.matches(changePassword.getPassword(), userInfo.getPassword())) {
-                        WebContext.setAttribute(PasswordPolicyValidatorServiceImpl.PASSWORD_POLICY_VALIDATE_RESULT, 
-                                WebContext.getI18nValue("PasswordPolicy.OLD_PASSWORD_MATCH"));
-                    }else {
-                        WebContext.setAttribute(PasswordPolicyValidatorServiceImpl.PASSWORD_POLICY_VALIDATE_RESULT, 
-                            WebContext.getI18nValue("PasswordPolicy.OLD_PASSWORD_NOT_MATCH"));
-                    }
-                }
-            }else {
+            if (!StringUtils.equals(changePassword.getPassword(), changePassword.getConfirmPassword())) {
                 WebContext.setAttribute(PasswordPolicyValidatorServiceImpl.PASSWORD_POLICY_VALIDATE_RESULT, 
                         WebContext.getI18nValue("PasswordPolicy.CONFIRMPASSWORD_NOT_MATCH"));
+                return false;
             }
+
+            if (userInfo == null) {
+                WebContext.setAttribute(PasswordPolicyValidatorServiceImpl.PASSWORD_POLICY_VALIDATE_RESULT,
+                        WebContext.getI18nValue("PasswordPolicy.OLD_PASSWORD_NOT_MATCH"));
+                return false;
+            }
+
+            boolean passwordNotSet = userInfo.getPasswordSetType() == ConstsPasswordSetType.PASSWORD_NOT_SET;
+            if (!passwordNotSet && (StringUtils.isBlank(changePassword.getOldPassword())
+                    || StringUtils.isBlank(userInfo.getPassword())
+                    || !passwordEncoder.matches(changePassword.getOldPassword(), userInfo.getPassword()))) {
+                WebContext.setAttribute(PasswordPolicyValidatorServiceImpl.PASSWORD_POLICY_VALIDATE_RESULT,
+                        WebContext.getI18nValue("PasswordPolicy.OLD_PASSWORD_NOT_MATCH"));
+                return false;
+            }
+
+            if (StringUtils.isNotBlank(userInfo.getPassword())
+                    && passwordEncoder.matches(changePassword.getPassword(), userInfo.getPassword())) {
+                WebContext.setAttribute(PasswordPolicyValidatorServiceImpl.PASSWORD_POLICY_VALIDATE_RESULT,
+                        WebContext.getI18nValue("PasswordPolicy.OLD_PASSWORD_MATCH"));
+                return false;
+            }
+
+            return changePassword(changePassword, true);
          } catch (Exception e) {
              e.printStackTrace();
          }    

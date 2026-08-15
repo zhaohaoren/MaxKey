@@ -113,4 +113,6 @@ public interface UserInfoService extends IJpaService<UserInfo,String> {
     
     public boolean     updateStatus(UserInfo userInfo);
 
+    public boolean updatePasswordSetType(UserInfo userInfo);
+
 }

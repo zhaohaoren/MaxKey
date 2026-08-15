@@ -93,9 +93,6 @@ public class AuthFeishu2Request extends AuthDefaultRequest {
         JSONObject requestObject = new JSONObject();
         requestObject.put("app_access_token", this.getAppAccessToken());
         requestObject.put("grant_type", "authorization_code");
-        requestObject.put("client_id", config.getClientId());
-        requestObject.put("client_secret", config.getClientSecret());
-        requestObject.put("redirect_uri", config.getRedirectUri());
         requestObject.put("code", authCallback.getCode());
         return getToken(requestObject, this.source.accessToken());
 
@@ -110,14 +107,11 @@ public class AuthFeishu2Request extends AuthDefaultRequest {
         log.info("######&& feishu user info response: {}", response);
         JSONObject object = JSON.parseObject(response);
         this.checkResponse(object);
-        JSONObject data = object;//.getJSONObject("data");
-        // ######&& 飞书可能只返回企业邮箱，社交登录时使用 enterprise_email 兜底。
-        String email = data.getString("email");
-        if (StringUtils.isEmpty(email)) {
-            email = data.getString("enterprise_email");
-        }
+        JSONObject data = object.getJSONObject("data");
+        // MaxKey uses the verified enterprise email for Feishu access control.
+        String email = data.getString("enterprise_email");
         return AuthUser.builder()
-            .rawUserInfo(object)
+            .rawUserInfo(data)
             .uuid(data.getString("union_id"))
             .username(data.getString("name"))
             .nickname(data.getString("name"))
@@ -147,7 +141,7 @@ public class AuthFeishu2Request extends AuthDefaultRequest {
             .add("Content-Type", "application/json")).getBody();
         JSONObject jsonObject = JSON.parseObject(response);
         this.checkResponse(jsonObject);
-        JSONObject data = jsonObject;//.getJSONObject("data");
+        JSONObject data = jsonObject.getJSONObject("data");
         return AuthToken.builder()
             .accessToken(data.getString("access_token"))
             .refreshToken(data.getString("refresh_token"))
@@ -160,9 +154,8 @@ public class AuthFeishu2Request extends AuthDefaultRequest {
     @Override
     public String authorize(String state) {
         return UrlBuilder.fromBaseUrl(source.authorize())
-            .queryParam("client_id", config.getClientId())
+            .queryParam("app_id", config.getClientId())
             .queryParam("redirect_uri", GlobalAuthUtils.urlEncode(config.getRedirectUri()))
-            .queryParam("response_type", "code")
             .queryParam("state", getRealState(state))
             .build();
     }
@@ -175,7 +168,11 @@ public class AuthFeishu2Request extends AuthDefaultRequest {
      */
     private void checkResponse(JSONObject jsonObject) {
         if (jsonObject.getIntValue("code") != 0) {
-            throw new AuthException(jsonObject.getString("message"));
+            String message = jsonObject.getString("msg");
+            if (StringUtils.isEmpty(message)) {
+                message = jsonObject.getString("message");
+            }
+            throw new AuthException(message);
         }
     }
 

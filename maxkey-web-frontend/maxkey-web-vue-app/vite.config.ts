@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     host: '127.0.0.1',
-    port: 5173,
+    port: 8527,
+    strictPort: true,
     proxy: {
       '/sign': {
         target: 'http://127.0.0.1:9527',
@@ -17,5 +18,10 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  preview: {
+    host: '127.0.0.1',
+    port: 8527,
+    strictPort: true,
   },
 })

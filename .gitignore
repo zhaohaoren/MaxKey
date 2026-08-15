@@ -54,6 +54,9 @@ maxkey-web-frontend/maxkey-web-app/.angular/
 maxkey-web-frontend/maxkey-web-app/yarn.lock
 maxkey-web-frontend/maxkey-web-app/dist
 
+maxkey-web-frontend/maxkey-web-vue-app/node_modules/
+maxkey-web-frontend/maxkey-web-vue-app/dist/
+
 **/out/*
 /.sonarlint
 **/**/package-lock.json

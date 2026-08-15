@@ -62,6 +62,7 @@ public class AuthJwt implements Serializable {
     private String username;
     private String displayName;
     private String email;
+    private String avatar;
     private String instId;
     private String instName;
     private int    passwordSetType;
@@ -102,6 +103,7 @@ public class AuthJwt implements Serializable {
         this.name = this.username;
         this.displayName = principal.getUserInfo().getDisplayName();
         this.email = principal.getUserInfo().getEmail();
+        this.passwordSetType = principal.getUserInfo().getPasswordSetType();
         this.instId = principal.getUserInfo().getInstId();
         this.instName = principal.getUserInfo().getInstName();
         this.twoFactor =principal.getTwoFactor();
@@ -156,6 +158,12 @@ public class AuthJwt implements Serializable {
     }
     public void setEmail(String email) {
         this.email = email;
+    }
+    public String getAvatar() {
+        return avatar;
+    }
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
     public String getInstId() {
         return instId;

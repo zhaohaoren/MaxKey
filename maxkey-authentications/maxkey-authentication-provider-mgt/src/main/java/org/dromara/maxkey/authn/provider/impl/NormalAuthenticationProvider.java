@@ -19,6 +19,7 @@ package org.dromara.maxkey.authn.provider.impl;
 
 import java.text.ParseException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.dromara.maxkey.authn.LoginCredential;
 import org.dromara.maxkey.authn.jwt.AuthTokenService;
 import org.dromara.maxkey.authn.provider.AbstractAuthenticationProvider;
@@ -43,6 +44,8 @@ import org.springframework.security.core.AuthenticationException;
  */
 public class NormalAuthenticationProvider extends AbstractAuthenticationProvider {
     private static final Logger _logger = LoggerFactory.getLogger(NormalAuthenticationProvider.class);
+    private static final String ADMIN_USERNAME = "admin";
+    private static final String ENTERPRISE_EMAIL_SUFFIX = "@snowx.com";
 
     @Override
     public String getProviderName() {
@@ -81,6 +84,8 @@ public class NormalAuthenticationProvider extends AbstractAuthenticationProvider
             emptyPasswordValid(loginCredential.getPassword());
     
             emptyUsernameValid(loginCredential.getUsername());
+
+            enterpriseEmailValid(loginCredential.getUsername());
     
             UserInfo userInfo =  loadUserInfo(loginCredential.getUsername(),loginCredential.getPassword());
     
@@ -134,5 +139,21 @@ public class NormalAuthenticationProvider extends AbstractAuthenticationProvider
         if(!authTokenService.validateCaptcha(state,captcha)) {
             throw new BadCredentialsException(WebContext.getI18nValue("login.error.captcha"));
         }        
+    }
+
+    /**
+     * Local password login uses the Feishu enterprise email. The built-in administrator
+     * remains available for system maintenance and recovery.
+     */
+    protected boolean enterpriseEmailValid(String username) {
+        String loginName = StringUtils.trimToEmpty(username);
+        if (ADMIN_USERNAME.equalsIgnoreCase(loginName)) {
+            return true;
+        }
+        if (loginName.length() <= ENTERPRISE_EMAIL_SUFFIX.length()
+                || !StringUtils.endsWithIgnoreCase(loginName, ENTERPRISE_EMAIL_SUFFIX)) {
+            throw new BadCredentialsException("请使用 @snowx.com 飞书企业邮箱登录");
+        }
+        return true;
     }
 }

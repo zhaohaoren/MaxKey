@@ -90,6 +90,7 @@ public class ForgotPasswordContorller {
 
     @GetMapping(value = { "/validateCaptcha" }, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<ChangePassword> validateCaptcha(
+            @RequestParam(required = false, defaultValue = "mobile") String forgotType,
             @RequestParam String userId,
             @RequestParam String state,
             @RequestParam String captcha,
@@ -98,8 +99,10 @@ public class ForgotPasswordContorller {
         logger.debug(" userId {}: " ,userId);
         UserInfo userInfo = userInfoService.get(userId);
         if(userInfo != null) {
-            AbstractOtpAuthn smsOtpAuthn = smsOtpAuthnService.getByInstId(userInfo.getInstId());
-            if (otpCaptcha == null || !smsOtpAuthn.validate(userInfo, otpCaptcha)) {
+            AbstractOtpAuthn otpAuthn = "email".equalsIgnoreCase(forgotType)
+                    ? mailOtpAuthnService.getMailOtpAuthn(userInfo.getInstId())
+                    : smsOtpAuthnService.getByInstId(userInfo.getInstId());
+            if (otpCaptcha == null || otpAuthn == null || !otpAuthn.validate(userInfo, otpCaptcha)) {
                 return new Message<>(Message.FAIL);
             }
             return new Message<>(Message.SUCCESS);

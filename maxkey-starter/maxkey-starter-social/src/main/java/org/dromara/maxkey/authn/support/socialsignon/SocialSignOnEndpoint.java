@@ -28,6 +28,7 @@ import org.dromara.maxkey.authn.LoginCredential;
 import org.dromara.maxkey.authn.annotation.CurrentUser;
 import org.dromara.maxkey.authn.jwt.AuthJwt;
 import org.dromara.maxkey.constants.ConstsLoginType;
+import org.dromara.maxkey.constants.ConstsPasswordSetType;
 import org.dromara.maxkey.constants.ConstsStatus;
 import org.dromara.maxkey.entity.Message;
 import org.dromara.maxkey.entity.SocialsAssociate;
@@ -55,6 +56,10 @@ import java.util.Map;
 @RequestMapping(value = "/logon/oauth20")
 public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
     static final  Logger _logger = LoggerFactory.getLogger(SocialSignOnEndpoint.class);
+    // todo 抽离到配置文件
+    private static final String FEISHU_ALLOWED_EMAIL_SUFFIX = "@snowx.com";
+    private static final String FEISHU_PASSWORD_STATE_MARKER = "feishu_password_state_v1";
+    private static final long PROVISIONING_TIME_TOLERANCE_MILLIS = 5 * 60 * 1000L;
 
     @Autowired
     UserInfoService userInfoService;
@@ -66,6 +71,29 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
                 : WebContext.getContextPath(request, false) + frontendUri;
     }
 
+    private String getFeishuEnterpriseEmail(SocialsAssociate socialsAssociate) {
+        if (socialsAssociate == null || StringUtils.isBlank(socialsAssociate.getSocialUserInfo())) {
+            return null;
+        }
+        JSONObject feishuUser = JSON.parseObject(socialsAssociate.getSocialUserInfo());
+        return StringUtils.trimToNull(feishuUser.getString("enterprise_email"));
+    }
+
+    private String getFeishuAvatar(SocialsAssociate socialsAssociate) {
+        if (socialsAssociate == null || StringUtils.isBlank(socialsAssociate.getSocialUserInfo())) {
+            return null;
+        }
+        JSONObject feishuUser = JSON.parseObject(socialsAssociate.getSocialUserInfo());
+        return StringUtils.trimToNull(feishuUser.getString("avatar_url"));
+    }
+
+    private boolean isAllowedFeishuUser(SocialsAssociate socialsAssociate) {
+        String enterpriseEmail = getFeishuEnterpriseEmail(socialsAssociate);
+        return enterpriseEmail != null
+                && enterpriseEmail.length() > FEISHU_ALLOWED_EMAIL_SUFFIX.length()
+                && StringUtils.endsWithIgnoreCase(enterpriseEmail, FEISHU_ALLOWED_EMAIL_SUFFIX);
+    }
+
     private SocialsAssociate provisionFeishuUser(SocialsAssociate socialsAssociate) {
         JSONObject feishuUser = JSON.parseObject(socialsAssociate.getSocialUserInfo());
         UserInfo userInfo = new UserInfo();
@@ -73,8 +101,9 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
         userInfo.setUsername("feishu_" + socialsAssociate.getSocialUserId());
         userInfo.setDisplayName(feishuUser.getString("name"));
         userInfo.setNickName(feishuUser.getString("name"));
-        userInfo.setEmail(feishuUser.getString("email"));
+        userInfo.setEmail(getFeishuEnterpriseEmail(socialsAssociate));
         userInfo.setPassword(userInfoService.randomPassword());
+        userInfo.setPasswordSetType(ConstsPasswordSetType.PASSWORD_NOT_SET);
         userInfo.setUserType("EMPLOYEE");
         userInfo.setUserState("RESIDENT");
         userInfo.setStatus(ConstsStatus.ACTIVE);
@@ -86,11 +115,43 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
 
         socialsAssociate.setUserId(userInfo.getId());
         socialsAssociate.setUsername(userInfo.getUsername());
+        socialsAssociate.setExAttribute(FEISHU_PASSWORD_STATE_MARKER);
         if (socialsAssociateService.insert(socialsAssociate)) {
             return socialsAssociate;
         }
         userInfoService.delete(userInfo);
         return null;
+    }
+
+    /**
+     * Accounts provisioned before PASSWORD_NOT_SET existed received an unknown random
+     * password. Mark them once, without resetting users who subsequently chose a password.
+     */
+    private void migrateLegacyFeishuPasswordState(SocialsAssociate socialsAssociate) {
+        if (socialsAssociate == null
+                || StringUtils.isNotBlank(socialsAssociate.getExAttribute())
+                || !StringUtils.startsWith(socialsAssociate.getUsername(), "feishu_")) {
+            return;
+        }
+
+        UserInfo userInfo = userInfoService.get(socialsAssociate.getUserId());
+        if (userInfo == null) {
+            return;
+        }
+
+        boolean generatedPasswordUnchanged = userInfo.getPasswordSetType() == ConstsPasswordSetType.PASSWORD_NORMAL
+                && userInfo.getCreatedDate() != null
+                && userInfo.getPasswordLastSetTime() != null
+                && Math.abs(userInfo.getPasswordLastSetTime().getTime() - userInfo.getCreatedDate().getTime())
+                        <= PROVISIONING_TIME_TOLERANCE_MILLIS;
+        if (generatedPasswordUnchanged) {
+            userInfo.setPasswordSetType(ConstsPasswordSetType.PASSWORD_NOT_SET);
+            if (!userInfoService.updatePasswordSetType(userInfo)) {
+                _logger.warn("Failed to migrate Feishu password state for user {}", userInfo.getUsername());
+                return;
+            }
+        }
+        socialsAssociate.setExAttribute(FEISHU_PASSWORD_STATE_MARKER);
     }
 
     @GetMapping("/authorize/{provider}")
@@ -170,6 +231,11 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
             SocialsAssociate socialsAssociate = 
                     this.authCallback(instId,provider,getFrontendUrl(request));
 
+            if ("feishu".equalsIgnoreCase(provider) && !isAllowedFeishuUser(socialsAssociate)) {
+                _logger.warn("Rejected Feishu login because enterprise_email is missing or outside snowx.com");
+                return new Message<>(Message.FAIL, "仅允许使用 @snowx.com 企业邮箱的飞书账号登录");
+            }
+
             SocialsAssociate socialssssociate1 = this.socialsAssociateService.get(socialsAssociate);
         
             _logger.debug("Loaded SocialSignOn Socials Associate : {}",socialssssociate1);
@@ -188,6 +254,9 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
 
             socialsAssociate = socialssssociate1;
             if(socialsAssociate != null) {
+                if ("feishu".equalsIgnoreCase(provider)) {
+                    migrateLegacyFeishuPasswordState(socialsAssociate);
+                }
                 _logger.debug("Social Sign On from {} mapping to user {}",
                         socialsAssociate.getProvider(),socialsAssociate.getUsername());
                 LoginCredential loginCredential =new LoginCredential(
@@ -199,7 +268,12 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
                 socialsAssociate.setSocialUserInfo(accountJsonString);
             
                 this.socialsAssociateService.update(socialsAssociate);
-                return new Message<>(authTokenService.genAuthJwt(authentication));
+                AuthJwt authJwt = authTokenService.genAuthJwt(authentication);
+                if ("feishu".equalsIgnoreCase(provider)) {
+                    authJwt.setEmail(getFeishuEnterpriseEmail(socialsAssociate));
+                    authJwt.setAvatar(getFeishuAvatar(socialsAssociate));
+                }
+                return new Message<>(authJwt);
             }else {
                 
             }

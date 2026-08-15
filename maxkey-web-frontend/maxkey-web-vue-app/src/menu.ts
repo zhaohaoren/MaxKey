@@ -1,67 +1,82 @@
 export interface MenuItem {
   key: string
-  title: string
+  titleKey: string
   path?: string
   children?: MenuItem[]
 }
 
 export const portalMenus: MenuItem[] = [
-  { key: 'apps', title: '应用', path: '/dashboard/home' },
-  { key: 'sessions', title: '会话', path: '/access/sessions' },
+  { key: 'apps', titleKey: 'portal.mxk.menu.applist', path: '/dashboard/home' },
+  { key: 'sessions', titleKey: 'portal.mxk.menu.sessions', path: '/access/sessions' },
   {
     key: 'settings',
-    title: '设置',
+    titleKey: 'ui.legacy.portalSettings',
     children: [
-      { key: 'profile', title: '我的资料', path: '/config/profile' },
-      { key: 'passkey', title: 'Passkey 注册', path: '/config/passkey' },
-      { key: 'mfa', title: '二次认证', path: '/config/mfa' },
-      { key: 'password', title: '密码修改', path: '/config/password' },
+      { key: 'profile', titleKey: 'portal.mxk.menu.config.profile', path: '/config/profile' },
+      { key: 'passkey', titleKey: 'portal.mxk.menu.config.passkey', path: '/config/passkey' },
+      { key: 'mfa', titleKey: 'portal.mxk.menu.config.mfa', path: '/config/mfa' },
+      { key: 'timebased', titleKey: 'portal.mxk.menu.config.timebased', path: '/config/timebased' },
+      { key: 'password', titleKey: 'portal.mxk.menu.config.password', path: '/config/password' },
     ],
   },
-  { key: 'audit', title: '审计', path: '/audit/audit-logins' },
+  {
+    key: 'audit', titleKey: 'ui.legacy.portalAudit', children: [
+      { key: 'audit-logins', titleKey: 'portal.mxk.menu.audit.logins', path: '/audit/audit-logins' },
+      { key: 'audit-apps', titleKey: 'portal.mxk.menu.audit.loginapps', path: '/audit/audit-login-apps' },
+      { key: 'audit-systems', titleKey: 'portal.mxk.menu.audit.operate', path: '/audit/audit-system-logs' },
+    ],
+  },
 ]
 
 export const adminMenus: MenuItem[] = [
-  { key: 'dashboard', title: '首页', path: '/admin' },
+  { key: 'dashboard', titleKey: 'admin.mxk.menu.home', path: '/admin' },
   {
     key: 'identities',
-    title: '身份管理',
+    titleKey: 'ui.legacy.adminIdentities',
     children: [
-      { key: 'orgs', title: '组织', path: '/admin/orgs' },
-      { key: 'users', title: '用户', path: '/admin/users' },
-      { key: 'groups', title: '用户组', path: '/admin/groups' },
-      { key: 'groupmembers', title: '用户组成员', path: '/admin/groupmembers' },
+      { key: 'orgs', titleKey: 'admin.mxk.menu.identities.organizations', path: '/admin/orgs' },
+      { key: 'users', titleKey: 'admin.mxk.menu.identities.users', path: '/admin/users' },
+      { key: 'groups', titleKey: 'admin.mxk.menu.identities.groups', path: '/admin/groups' },
+      { key: 'groupmembers', titleKey: 'admin.mxk.menu.identities.groupmembers', path: '/admin/groupmembers' },
     ],
   },
-  { key: 'accounts', title: '账号凭证', path: '/admin/accounts' },
-  { key: 'apps', title: '应用管理', path: '/admin/apps' },
-  { key: 'institutions', title: '机构配置', path: '/admin/institutions' },
-  { key: 'access', title: '访问控制', path: '/admin/access' },
+  { key: 'accounts', titleKey: 'admin.mxk.menu.accounts', path: '/admin/accounts' },
+  { key: 'apps', titleKey: 'admin.mxk.menu.apps', path: '/admin/apps' },
+  { key: 'institutions', titleKey: 'admin.mxk.menu.config.institutions', path: '/admin/institutions' },
+  { key: 'access', titleKey: 'ui.legacy.adminAccess', path: '/admin/access' },
   {
     key: 'permissions',
-    title: '权限管理',
+    titleKey: 'ui.legacy.adminPermissions',
     children: [
-      { key: 'roles', title: '角色', path: '/admin/roles' },
-      { key: 'permission', title: '权限', path: '/admin/permission' },
-      { key: 'resources', title: '资源', path: '/admin/resources' },
-      { key: 'permissionRole', title: '角色权限', path: '/admin/permissionRole' },
-      { key: 'roleMembers', title: '角色成员', path: '/admin/roleMembers' },
+      { key: 'roles', titleKey: 'ui.roles', path: '/admin/roles' },
+      { key: 'permission', titleKey: 'admin.mxk.menu.access.permissions', path: '/admin/permission' },
+      { key: 'resources', titleKey: 'admin.mxk.menu.permissions.resources', path: '/admin/resources' },
+      { key: 'permissionRole', titleKey: 'ui.permissionRole', path: '/admin/permissionRole' },
+      { key: 'roleMembers', titleKey: 'ui.roleMembers', path: '/admin/roleMembers' },
     ],
   },
-  { key: 'synchronizers', title: '同步器管理', path: '/admin/synchronizers' },
+  { key: 'synchronizers', titleKey: 'admin.mxk.menu.config.synchronizers', path: '/admin/synchronizers' },
   {
     key: 'config',
-    title: '系统配置',
+    titleKey: 'ui.legacy.adminConfig',
     children: [
-      { key: 'connectors', title: '连接器', path: '/admin/connectors' },
-      { key: 'adapters', title: '适配器', path: '/admin/adapters' },
-      { key: 'accountsstrategy', title: '账号策略', path: '/admin/accountsstrategy' },
-      { key: 'socialsprovider', title: '社会化登录', path: '/admin/socialsprovider' },
-      { key: 'ldapcontext', title: 'LDAP', path: '/admin/ldapcontext' },
-      { key: 'emailsenders', title: '邮件发送器', path: '/admin/emailsenders' },
-      { key: 'smsprovider', title: '短信服务商', path: '/admin/smsprovider' },
-      { key: 'passwordpolicy', title: '密码策略', path: '/admin/passwordpolicy' },
+      { key: 'connectors', titleKey: 'admin.mxk.menu.config.connectors', path: '/admin/connectors' },
+      { key: 'adapters', titleKey: 'admin.mxk.menu.config.adapters', path: '/admin/adapters' },
+      { key: 'accountsstrategy', titleKey: 'admin.mxk.menu.config.accountsstrategys', path: '/admin/accountsstrategy' },
+      { key: 'socialsprovider', titleKey: 'admin.mxk.menu.config.socialsproviders', path: '/admin/socialsprovider' },
+      { key: 'ldapcontext', titleKey: 'admin.mxk.menu.config.ldapcontext', path: '/admin/ldapcontext' },
+      { key: 'emailsenders', titleKey: 'admin.mxk.menu.config.emailsenders', path: '/admin/emailsenders' },
+      { key: 'smsprovider', titleKey: 'admin.mxk.menu.config.smsproviders', path: '/admin/smsprovider' },
+      { key: 'passwordpolicy', titleKey: 'admin.mxk.menu.config.passwordpolicy', path: '/admin/passwordpolicy' },
     ],
   },
-  { key: 'historys', title: '日志审计', path: '/admin/historys' },
+  {
+    key: 'historys', titleKey: 'ui.legacy.adminAudit', children: [
+      { key: 'admin-audit-logins', titleKey: 'admin.mxk.menu.audit.logins', path: '/admin/audit/logins' },
+      { key: 'admin-audit-apps', titleKey: 'admin.mxk.menu.audit.loginapps', path: '/admin/audit/apps' },
+      { key: 'admin-audit-systems', titleKey: 'admin.mxk.menu.audit.operate', path: '/admin/audit/systems' },
+      { key: 'admin-audit-sync', titleKey: 'admin.mxk.menu.audit.synchronizer', path: '/admin/audit/synchronizers' },
+      { key: 'admin-audit-connectors', titleKey: 'admin.mxk.menu.audit.connector', path: '/admin/audit/connectors' },
+    ],
+  },
 ]

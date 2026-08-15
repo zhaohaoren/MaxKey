@@ -79,5 +79,9 @@ public interface UserInfoMapper  extends IJpaMapper<UserInfo,String>{
     public int     updateGridList(UserInfo userInfo) ;
     
     @Update("update mxk_userinfo set status =  #{status} where id = #{id} and instid = #{instId} ")
-       public int     updateStatus(UserInfo userInfo) ;
+    public int     updateStatus(UserInfo userInfo) ;
+
+    @Update("update mxk_userinfo set passwordsettype = #{passwordSetType}, modifieddate = current_timestamp "
+            + "where id = #{id} and instid = #{instId}")
+    public int updatePasswordSetType(UserInfo userInfo);
 }

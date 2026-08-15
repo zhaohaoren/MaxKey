@@ -79,7 +79,7 @@ public class LoginServiceImpl  implements LoginService{
     /**
      * 1 (USERNAME)  2 (USERNAME | MOBILE) 3 (USERNAME | MOBILE | EMAIL)
      */
-    public  static  int LOGIN_ATTRIBUTE_TYPE = 2;
+    public  static  int LOGIN_ATTRIBUTE_TYPE = 3;
 
     public LoginServiceImpl(){
 
@@ -521,5 +521,4 @@ public class LoginServiceImpl  implements LoginService{
         return (CollectionUtils.isNotEmpty(listUserInfo) ? listUserInfo.get(0) : null);
     }
 }
-
 

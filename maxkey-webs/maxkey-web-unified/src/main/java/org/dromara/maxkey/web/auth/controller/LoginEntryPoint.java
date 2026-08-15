@@ -17,22 +17,26 @@
 
 package org.dromara.maxkey.web.auth.controller;
 
+import com.nimbusds.jwt.JWTClaimsSet;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.maxkey.authn.LoginCredential;
+import org.dromara.maxkey.authn.SignPrincipal;
 import org.dromara.maxkey.authn.jwt.AuthJwt;
 import org.dromara.maxkey.authn.jwt.AuthTokenService;
 import org.dromara.maxkey.authn.provider.AbstractAuthenticationProvider;
 import org.dromara.maxkey.authn.session.SessionManager;
+import org.dromara.maxkey.authn.session.Session;
 import org.dromara.maxkey.authn.support.kerberos.KerberosService;
 import org.dromara.maxkey.authn.support.rememberme.AbstractRemeberMeManager;
 import org.dromara.maxkey.authn.support.rememberme.RemeberMe;
 import org.dromara.maxkey.authn.support.socialsignon.service.SocialSignOnProviderService;
 import org.dromara.maxkey.configuration.ApplicationConfig;
 import org.dromara.maxkey.constants.ConstsLoginType;
+import org.dromara.maxkey.constants.ConstsTwoFactor;
 import org.dromara.maxkey.entity.Institutions;
 import org.dromara.maxkey.entity.Message;
 import org.dromara.maxkey.entity.SocialsAssociate;
@@ -40,6 +44,7 @@ import org.dromara.maxkey.entity.SocialsProvider;
 import org.dromara.maxkey.entity.idm.UserInfo;
 import org.dromara.maxkey.passkey.config.PasskeyProperties;
 import org.dromara.maxkey.password.onetimepwd.AbstractOtpAuthn;
+import org.dromara.maxkey.password.onetimepwd.MailOtpAuthnService;
 import org.dromara.maxkey.password.sms.SmsOtpAuthnService;
 import org.dromara.maxkey.persistence.service.SocialsAssociatesService;
 import org.dromara.maxkey.persistence.service.UserInfoService;
@@ -94,6 +99,9 @@ public class LoginEntryPoint {
 
     @Autowired
     SmsOtpAuthnService smsAuthnService;
+
+    @Autowired
+    MailOtpAuthnService mailOtpAuthnService;
 
     @Autowired
     AbstractRemeberMeManager remeberMeManager;
@@ -158,7 +166,7 @@ public class LoginEntryPoint {
 
 
      @GetMapping(value={"/sendotp/{mobile}"}, produces = {MediaType.APPLICATION_JSON_VALUE})
-    public Message<AuthJwt> produceOtp(@PathVariable String mobile) {
+     public Message<AuthJwt> produceOtp(@PathVariable String mobile) {
         UserInfo userInfo=userInfoService.findByEmailMobile(mobile);
         if(userInfo != null) {
             smsAuthnService.getByInstId(WebContext.getInst().getId()).produce(userInfo);
@@ -166,6 +174,42 @@ public class LoginEntryPoint {
         }
 
         return new Message<AuthJwt>(Message.FAIL);
+    }
+
+    @PostMapping(value={"/sendTwoFactorCode"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> sendTwoFactorCode(@RequestBody LoginCredential credential) {
+        try {
+            if (!authTokenService.validateJwtToken(credential.getJwtToken())) {
+                return new Message<>(Message.FAIL, "二次认证令牌已失效");
+            }
+            JWTClaimsSet claims = authTokenService.resolve(credential.getJwtToken());
+            Session session = sessionManager.getTwoFactor(claims.getJWTID());
+            if (session == null || session.getAuthentication() == null) {
+                return new Message<>(Message.FAIL, "二次认证会话已失效");
+            }
+            SignPrincipal principal = (SignPrincipal) session.getAuthentication().getPrincipal();
+            UserInfo userInfo = principal.getUserInfo();
+            if (principal.getTwoFactor() == ConstsTwoFactor.EMAIL) {
+                AbstractOtpAuthn mailOtpAuthn = mailOtpAuthnService.getMailOtpAuthn(userInfo.getInstId());
+                if (mailOtpAuthn == null) {
+                    return new Message<>(Message.FAIL, "邮件验证码服务未配置");
+                }
+                mailOtpAuthn.produce(userInfo);
+                return new Message<>(Message.SUCCESS);
+            }
+            if (principal.getTwoFactor() == ConstsTwoFactor.SMS) {
+                AbstractOtpAuthn smsOtpAuthn = smsAuthnService.getByInstId(userInfo.getInstId());
+                if (smsOtpAuthn == null) {
+                    return new Message<>(Message.FAIL, "短信验证码服务未配置");
+                }
+                smsOtpAuthn.produce(userInfo);
+                return new Message<>(Message.SUCCESS);
+            }
+            return new Message<>(Message.FAIL, "当前二次认证类型无需发送验证码");
+        } catch (Exception e) {
+            logger.error("send two factor code failed", e);
+            return new Message<>(Message.FAIL, "二次认证验证码发送失败");
+        }
     }
 
     @PostMapping(value={"/signin/bindusersocials"})

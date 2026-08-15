@@ -20,7 +20,7 @@ spring:
     allow-bean-definition-overriding: true
   profiles:
     active:
-      - dev
+      - dev2
       - maxkey
 
 knife4j:

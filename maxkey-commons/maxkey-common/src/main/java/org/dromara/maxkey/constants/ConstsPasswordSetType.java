@@ -32,4 +32,7 @@ public final class ConstsPasswordSetType {
     
     public static final int MANAGER_CHANGED_PASSWORD     = 2;
 
+    /** The account was provisioned by an external identity provider and has no user-defined password. */
+    public static final int PASSWORD_NOT_SET             = 4;
+
 }

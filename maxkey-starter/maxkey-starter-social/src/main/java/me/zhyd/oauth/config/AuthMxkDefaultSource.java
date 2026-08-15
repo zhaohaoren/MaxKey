@@ -24,22 +24,22 @@ public enum AuthMxkDefaultSource implements AuthSource {
      FEISHU2 {
             @Override
             public String authorize() {
-                return "https://passport.feishu.cn/suite/passport/oauth/authorize";
+                return "https://open.feishu.cn/open-apis/authen/v1/index";
             }
 
             @Override
             public String accessToken() {
-                return "https://passport.feishu.cn/suite/passport/oauth/token";
+                return "https://open.feishu.cn/open-apis/authen/v1/access_token";
             }
 
             @Override
             public String userInfo() {
-                return "https://passport.feishu.cn/suite/passport/oauth/userinfo";
+                return "https://open.feishu.cn/open-apis/authen/v1/user_info";
             }
 
             @Override
             public String refresh() {
-                return "https://passport.feishu.cn/suite/passport/oauth/token";
+                return "https://open.feishu.cn/open-apis/authen/v1/refresh_access_token";
             }
 
             @Override
