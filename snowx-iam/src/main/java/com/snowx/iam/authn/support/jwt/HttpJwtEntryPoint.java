@@ -1,0 +1,93 @@
+/*
+ * Copyright [2022] [MaxKey of copyright http://www.maxkey.top]
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+package com.snowx.iam.authn.support.jwt;
+
+import com.snowx.iam.authn.LoginCredential;
+import com.snowx.iam.authn.jwt.AuthJwt;
+import com.snowx.iam.authn.jwt.AuthTokenService;
+import com.snowx.iam.authn.provider.AbstractAuthenticationProvider;
+import com.snowx.iam.configuration.ApplicationConfig;
+import com.snowx.iam.constants.ConstsLoginType;
+import com.snowx.iam.entity.Message;
+import com.snowx.iam.web.WebConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.nimbusds.jwt.SignedJWT;
+
+
+@RestController
+@RequestMapping(value = "/login")
+public class HttpJwtEntryPoint {
+    private static final Logger _logger = LoggerFactory.getLogger(HttpJwtEntryPoint.class);
+    
+    @Autowired
+    ApplicationConfig applicationConfig;
+    
+    @Autowired
+    AbstractAuthenticationProvider authenticationProvider ;
+      
+    @Autowired
+    AuthTokenService authTokenService;
+      
+    @Autowired
+    JwtLoginService jwtLoginService;
+    
+    @RequestMapping(value={"/jwt"}, produces = {MediaType.APPLICATION_JSON_VALUE},method={RequestMethod.GET,RequestMethod.POST})
+    public Message<AuthJwt> jwt(@RequestParam(value = WebConstants.JWT_TOKEN_PARAMETER, required = true) String jwt) {
+        try {
+        	if(applicationConfig.getLoginConfig().isJwt()) {
+	            //for jwt Login
+	             _logger.debug("jwt : {}" , jwt);
+	             SignedJWT signedJWT = jwtLoginService.jwtTokenValidation(jwt);
+	             if(signedJWT != null) {
+	                 String subject =signedJWT.getJWTClaimsSet().getSubject();
+	                 LoginCredential loginCredential =new LoginCredential(subject,"",ConstsLoginType.JWT);
+	                 Authentication  authentication = authenticationProvider.authenticate(loginCredential,true);
+	                 _logger.debug("JWT Logined in , subject {}" , subject);
+	                 AuthJwt authJwt = authTokenService.genAuthJwt(authentication);
+	                  return new Message<>(authJwt);
+	             }
+        	}else {
+				_logger.debug("JWT Login is not enabled.");
+        	}
+        }catch(Exception e) {
+            _logger.error("Exception ",e);
+        }
+        return new Message<>(Message.FAIL);
+    }
+    
+    public void setApplicationConfig(ApplicationConfig applicationConfig) {
+        this.applicationConfig = applicationConfig;
+    }
+
+    public void setAuthenticationProvider(AbstractAuthenticationProvider authenticationProvider) {
+        this.authenticationProvider = authenticationProvider;
+    }
+
+    public void setJwtLoginService(JwtLoginService jwtLoginService) {
+        this.jwtLoginService = jwtLoginService;
+    }
+    
+}

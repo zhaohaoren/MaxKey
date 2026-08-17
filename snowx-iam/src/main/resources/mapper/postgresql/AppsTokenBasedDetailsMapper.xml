@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snowx.iam.persistence.mapper.AppsTokenBasedDetailsMapper">
+
+    <insert id="insert" parameterType="AppsTokenBasedDetails">
+        insert into mxk_apps_token_based_details(
+            id, algorithmkey, algorithm, expires, redirecturi, cookiename, tokentype, instid)
+        values (
+            #{id}, #{algorithmKey}, #{algorithm}, #{expires}, #{redirectUri}, #{cookieName}, #{tokenType}, #{instId})
+    </insert>
+
+    <update id="updateById" parameterType="AppsTokenBasedDetails">
+        update mxk_apps_token_based_details
+        set algorithmkey = #{et.algorithmKey}, algorithm = #{et.algorithm}, expires = #{et.expires},
+            redirecturi = #{et.redirectUri}, cookiename = #{et.cookieName}, tokentype = #{et.tokenType}, instid = #{et.instId}
+        where id = #{et.id}
+    </update>
+
+    <select id="getAppDetails" parameterType="string" resultType="AppsTokenBasedDetails">
+        select *
+        from mxk_apps_token_based_details tbd,
+             mxk_apps app
+        where app.instid = tbd.instid
+          and app.id = #{value}
+          and tbd.id = #{value}
+          and tbd.id = app.id
+          and status = 1
+    </select>
+
+</mapper>

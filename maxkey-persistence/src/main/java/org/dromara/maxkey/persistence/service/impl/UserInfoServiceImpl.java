@@ -178,6 +178,11 @@ public class UserInfoServiceImpl extends JpaServiceImpl<UserInfoMapper,UserInfo,
     public UserInfo findByEmailMobile(String emailMobile) {
         return getMapper().findByEmailMobile(emailMobile);
     }
+
+    @Override
+    public UserInfo findByEmailAndInstId(String email, String instId) {
+        return getMapper().findByEmailAndInstId(email, instId);
+    }
     
     @Override
     public UserInfo findByAppIdAndUsername(String appId, String username){

@@ -1,0 +1,130 @@
+/*
+ * Copyright [2021] [MaxKey of copyright http://www.maxkey.top]
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+package com.snowx.iam.web.admin.controller.config;
+
+import org.apache.commons.lang3.StringUtils;
+import com.snowx.iam.authn.annotation.CurrentUser;
+import com.snowx.iam.crypto.password.PasswordReciprocal;
+import com.snowx.iam.entity.Connectors;
+import com.snowx.iam.entity.Message;
+import com.snowx.iam.entity.Synchronizers;
+import com.snowx.iam.entity.idm.UserInfo;
+import com.snowx.iam.persistence.service.SynchronizersService;
+import com.snowx.iam.synchronizer.ISynchronizerService;
+import com.snowx.iam.util.StrUtils;
+import com.snowx.iam.web.WebContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(value = {"/admin/config/synchronizers"})
+public class SynchronizersController {
+    static final Logger logger = LoggerFactory.getLogger(SynchronizersController.class);
+
+    @Autowired
+    SynchronizersService synchronizersService;
+
+    @RequestMapping(value = {"/fetch"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    @ResponseBody
+    public Message<?> fetch(Synchronizers synchronizers, @CurrentUser UserInfo currentUser) {
+        logger.debug("fetch {}", synchronizers);
+        synchronizers.setInstId(currentUser.getInstId());
+        return new Message<>(
+                synchronizersService.fetchPageResults(synchronizers));
+    }
+
+    @RequestMapping(value = {"/get/{id}"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> get(@PathVariable String id, @CurrentUser UserInfo currentUser) {
+        Synchronizers synchronizers = synchronizersService.get(id,currentUser.getInstId());
+        synchronizers.setCredentials(PasswordReciprocal.getInstance().decoder(synchronizers.getCredentials()));
+        return new Message<>(synchronizers);
+    }
+
+    @ResponseBody
+    @RequestMapping(value = {"/add"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> add(@RequestBody Synchronizers synchronizers, @CurrentUser UserInfo currentUser) {
+        logger.debug("-add  : {}", synchronizers);
+        synchronizers.setId(synchronizers.generateId());
+        synchronizers.setInstId(currentUser.getInstId());
+        if (StringUtils.isNotBlank(synchronizers.getCredentials())) {
+            synchronizers.setCredentials(PasswordReciprocal.getInstance().encode(synchronizers.getCredentials()));
+        }
+        if (synchronizersService.insert(synchronizers)) {
+            return new Message<Synchronizers>(Message.SUCCESS);
+        } else {
+            return new Message<Synchronizers>(Message.FAIL);
+        }
+    }
+
+    @ResponseBody
+    @RequestMapping(value = {"/update"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> update(@RequestBody Synchronizers synchronizers, @CurrentUser UserInfo currentUser) {
+        logger.debug("-update  : {}", synchronizers);
+        synchronizers.setInstId(currentUser.getInstId());
+        synchronizers.setCredentials(PasswordReciprocal.getInstance().encode(synchronizers.getCredentials()));
+        if (synchronizersService.update(synchronizers)) {
+            return new Message<Synchronizers>(Message.SUCCESS);
+        } else {
+            return new Message<Synchronizers>(Message.FAIL);
+        }
+    }
+
+    @ResponseBody
+    @RequestMapping(value = {"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> delete(@RequestParam List<String> ids, @CurrentUser UserInfo currentUser) {
+        logger.debug("-delete  ids : {} ", ids);
+        if (synchronizersService.deleteBatch(ids,currentUser.getInstId())) {
+            return new Message<Connectors>(Message.SUCCESS);
+        } else {
+            return new Message<Connectors>(Message.FAIL);
+        }
+    }
+
+    @ResponseBody
+    @RequestMapping(value = {"/synchr"})
+    public Message<?> synchr(@RequestParam String id, @CurrentUser UserInfo currentUser) {
+        logger.debug("-sync ids : {}", id);
+
+        List<String> ids = StrUtils.string2List(id, ",");
+        try {
+            for (String sysId : ids) {
+                Synchronizers synchronizer = synchronizersService.get(sysId,currentUser.getInstId());
+                synchronizer.setCredentials(PasswordReciprocal.getInstance().decoder(synchronizer.getCredentials()));
+                logger.debug("synchronizer {}", synchronizer);
+                ISynchronizerService synchronizerService = WebContext.getBean(synchronizer.getService(), ISynchronizerService.class);
+                if (synchronizerService != null) {
+                    synchronizerService.setSynchronizer(synchronizer);
+                    synchronizerService.sync();
+                } else {
+                    logger.info("synchronizer {} not exist .", synchronizer.getService());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("synchronizer Exception ", e);
+            return new Message<Synchronizers>(Message.FAIL);
+
+        }
+        return new Message<Synchronizers>(Message.SUCCESS);
+    }
+
+}

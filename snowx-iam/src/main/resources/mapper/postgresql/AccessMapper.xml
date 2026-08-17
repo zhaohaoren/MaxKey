@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snowx.iam.persistence.mapper.AccessMapper">
+
+    <sql id="where_statement">
+        <if test="id != null and id != ''">
+            and apps.id = #{id}
+        </if>
+        <if test="appName != null and appName != ''">
+            and apps.appname like concat('%', #{appName}, '%')
+        </if>
+        <if test="protocol != null and protocol != ''">
+            and apps.protocol = #{protocol}
+        </if>
+        <if test="category != null and category != ''">
+            and apps.category = #{category}
+        </if>
+    </sql>
+
+    <insert id="insert" parameterType="Access">
+        insert into mxk_access(id, groupid, appid, createddate, instid)
+        values (#{id}, #{groupId}, #{appId}, current_timestamp, #{instId})
+    </insert>
+
+    <select id="appsInGroup" parameterType="Access" resultType="Access">
+        select p.id,
+               p.groupid,
+               g.groupname,
+               apps.id as appid,
+               apps.appname,
+               apps.icon,
+               apps.loginurl,
+               apps.protocol,
+               apps.category,
+               apps.description,
+               apps.vendor,
+               apps.vendorurl
+        from mxk_apps apps
+        join mxk_access p on p.appid = apps.id and p.instid = #{instId}
+        join mxk_groups g on g.id = p.groupid and g.instid = #{instId}
+        where apps.instid = #{instId}
+        <if test="groupId != null and groupId != ''">
+            and p.groupid = #{groupId}
+        </if>
+        <include refid="where_statement"/>
+        order by apps.sortindex, apps.id
+    </select>
+
+    <select id="appsNotInGroup" parameterType="Access" resultType="Access">
+        select apps.id,
+               apps.id as appid,
+               apps.appname,
+               apps.icon,
+               apps.loginurl,
+               apps.protocol,
+               apps.category,
+               apps.description,
+               apps.vendor,
+               apps.vendorurl
+        from mxk_apps apps
+        where apps.instid = #{instId}
+          and not exists (
+              select 1
+              from mxk_access p
+              where p.instid = #{instId}
+                and p.groupid = #{groupId}
+                and p.appid = apps.id
+          )
+        <include refid="where_statement"/>
+        order by apps.sortindex, apps.id
+    </select>
+
+</mapper>

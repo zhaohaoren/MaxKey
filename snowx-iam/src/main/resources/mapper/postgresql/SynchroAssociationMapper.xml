@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snowx.iam.persistence.mapper.SynchroAssociationMapper">
+    <resultMap id="associationResult" type="SynchroAssociation">
+        <id column="id" property="id"/>
+        <result column="syncid" property="syncId"/>
+        <result column="name" property="name"/>
+        <result column="objecttype" property="objectType"/>
+        <result column="targetfield" property="targetField"/>
+        <result column="targetfieldname" property="targetFieldName"/>
+        <result column="sourcefield" property="sourceField"/>
+        <result column="sourcefieldname" property="sourceFieldName"/>
+        <result column="description" property="description"/>
+        <result column="createuser" property="createUser"/>
+        <result column="createtime" property="createTime"/>
+        <result column="updateuser" property="updateUser"/>
+        <result column="updatetime" property="updateTime"/>
+        <result column="instid" property="instId"/>
+    </resultMap>
+
+    <select id="findBySyncIdAndObjectType" resultMap="associationResult">
+        select *
+        from mxk_synchro_association
+        where syncid = #{syncId}
+          and objecttype = #{objectType}
+    </select>
+
+    <select id="findBySyncId" resultMap="associationResult">
+        select *
+        from mxk_synchro_association
+        where syncid = #{value}
+    </select>
+
+    <delete id="deleteFieldMapById">
+        delete from mxk_synchro_association where id = #{value}
+    </delete>
+
+    <delete id="deleteFiledMapBySyncId">
+        delete from mxk_synchro_association where syncid = #{value}
+    </delete>
+
+    <delete id="deleteBySyncIdAndObjectType">
+        delete from mxk_synchro_association
+        where syncid = #{syncId}
+          and objecttype = #{objectType}
+    </delete>
+</mapper>

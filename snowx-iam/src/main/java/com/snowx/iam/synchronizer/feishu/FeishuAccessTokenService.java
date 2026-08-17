@@ -1,0 +1,100 @@
+/*
+ * Copyright [2022] [MaxKey of copyright http://www.maxkey.top]
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+
+package com.snowx.iam.synchronizer.feishu;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import com.snowx.iam.constants.ContentType;
+import com.snowx.iam.http.HttpRequestAdapter;
+import com.snowx.iam.synchronizer.entity.AccessToken;
+import com.snowx.iam.util.JsonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class FeishuAccessTokenService {
+    static final  Logger _logger = LoggerFactory.getLogger(FeishuAccessTokenService.class);
+    
+    String appId;
+    
+    String appSecret;
+    
+    public static String TOKEN_URL="https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal";
+
+
+    public FeishuAccessTokenService() {}
+    
+    
+    public FeishuAccessTokenService(String appId, String appSecret) {
+        super();
+        this.appId = appId;
+        this.appSecret = appSecret;
+    }
+
+
+    public String requestToken() {
+        HttpRequestAdapter request =new HttpRequestAdapter(ContentType.APPLICATION_JSON);
+        Map<String, Object> parameterMap = new HashMap<String, Object>();
+        parameterMap.put("app_id", appId);
+        parameterMap.put("app_secret", appSecret);
+        String responseBody = request.post(TOKEN_URL, parameterMap,null);
+        
+        AccessToken accessToken = JsonUtils.stringToObject(responseBody, AccessToken.class);
+        // ######&& 飞书 Token 响应中包含敏感 Token，只打印脱敏后的原始响应。
+        _logger.info("######&& 飞书 Token 响应：{}", maskSensitiveFields(responseBody));
+        if(accessToken.getErrcode()== 0){
+            return accessToken.getTenant_access_token();
+        }
+        return "";
+    }
+
+    private String maskSensitiveFields(String responseBody) {
+        if (responseBody == null) {
+            return null;
+        }
+        return responseBody.replaceAll(
+                "(\\\"(?:app_secret|tenant_access_token|access_token)\\\"\\s*:\\s*\\\")[^\\\"]*(\\\")",
+                "$1***$2");
+    }
+    
+    
+    public String getAppId() {
+        return appId;
+    }
+
+
+    public void setAppId(String appId) {
+        this.appId = appId;
+    }
+
+
+    public String getAppSecret() {
+        return appSecret;
+    }
+
+
+    public void setAppSecret(String appSecret) {
+        this.appSecret = appSecret;
+    }
+
+
+    public static void main(String[] args) {
+
+    }
+
+}

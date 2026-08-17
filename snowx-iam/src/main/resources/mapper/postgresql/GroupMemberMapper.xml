@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snowx.iam.persistence.mapper.GroupMemberMapper">
+
+    <sql id="where_statement">
+        <if test="id != null and id != ''">
+            and id = #{id}
+        </if>
+    </sql>
+
+    <insert id="insert" parameterType="GroupMember">
+        insert into mxk_group_member(id, groupid, memberid, type, createddate, instid)
+        values (#{id}, #{groupId}, #{memberId}, #{type}, current_timestamp, #{instId})
+    </insert>
+
+
+    <!-- GROUP_MEMBER  User Member-->
+    <select id="allMemberInGroup" parameterType="GroupMember" resultType="GroupMember">
+        select distinct u.id,
+                        u.username,
+                        u.usertype,
+                        u.windowsaccount,
+
+                        u.displayname,
+                        u.nickname,
+                        u.namezhspell,
+                        u.namezhshortspell,
+                        u.givenname,
+                        u.middlename,
+                        u.familyname,
+
+                        u.gender,
+
+                        u.authntype,
+                        u.mobile,
+                        u.email,
+                        u.workemail,
+                        u.workphonenumber,
+
+                        u.employeenumber,
+                        u.division,
+                        u.costcenter,
+                        u.organization,
+                        u.departmentid,
+                        u.department,
+                        u.jobtitle,
+                        u.joblevel,
+
+                        u.createddate,
+
+                        u.status
+        from mxk_userinfo u
+        where instid = #{instId}
+    </select>
+
+    <select id="memberIn" parameterType="GroupMember" resultType="GroupMember">
+        select distinct
+        gm.id,
+        u.username,
+        u.usertype,
+        u.windowsaccount,
+
+        u.displayname ,
+        u.nickname ,
+        u.namezhspell,
+        u.namezhshortspell,
+        u.givenname ,
+        u.middlename ,
+        u.familyname ,
+
+        u.gender,
+
+        u.authntype,
+        u.mobile,
+        u.email,
+        u.workemail,
+        u.workphonenumber,
+
+        u.employeenumber,
+        u.division,
+        u.costcenter,
+        u.organization,
+        u.departmentid,
+        u.department,
+        u.jobtitle,
+        u.joblevel,
+
+        gm.createddate,
+
+        u.status
+        from
+        mxk_userinfo u,
+        mxk_groups g,
+        mxk_group_member gm
+        where u.instid = #{instId}
+        and g.instid = #{instId}
+        and gm.instid = #{instId}
+        <if test="groupId != null and groupId != ''">
+            and gm.groupid = #{groupId}
+            and g.id = #{groupId}
+        </if>
+        <if test="groupName != null and groupName != ''">
+            and g.groupname = #{groupName}
+        </if>
+        <if test="username != null and username != ''">
+            and u.username = #{username}
+        </if>
+        <if test="displayName != null and displayName != ''">
+            and u.displayname like concat('%',#{displayName},'%')
+        </if>
+        and gm.type in( 'USER','USER-DYNAMIC')
+        and gm.groupid = g.id
+        and gm.memberid = u.id
+    </select>
+
+
+    <select id="memberNotIn" parameterType="GroupMember" resultType="GroupMember">
+        select distinct
+        u.id,
+        u.username,
+        u.usertype,
+        u.windowsaccount,
+
+        u.displayname ,
+        u.nickname ,
+        u.namezhspell,
+        u.namezhshortspell,
+        u.givenname ,
+        u.middlename ,
+        u.familyname ,
+
+        u.gender,
+
+        u.authntype,
+        u.mobile,
+        u.email,
+        u.workemail,
+        u.workphonenumber,
+
+        u.employeenumber,
+        u.division,
+        u.costcenter,
+        u.organization,
+        u.departmentid,
+        u.department,
+        u.jobtitle,
+        u.joblevel,
+
+
+        u.createdby,
+        u.createddate,
+        u.modifiedby,
+        u.modifieddate,
+
+        u.status
+        from
+        mxk_userinfo u
+        where
+        u.instid = #{instId}
+        and u.id not in(
+        select gm.memberid
+        from mxk_groups g,mxk_group_member gm
+        where g.instid = #{instId}
+        and gm.instid = #{instId}
+        <if test="groupId != null and groupId != ''">
+            and gm.groupid = #{groupId}
+            and g.id = #{groupId}
+        </if>
+        <if test="groupName != null and groupName != ''">
+            and g.groupname = #{groupName}
+        </if>
+        and gm.type in( 'USER','USER-DYNAMIC')
+        and gm.groupid = g.id
+        )
+        <if test="username != null and username != ''">
+            and u.username = #{username}
+        </if>
+        <if test="displayName != null and displayName != ''">
+            and u.displayname like concat('%',#{displayName},'%')
+        </if>
+    </select>
+
+
+    <select id="queryPageResults" parameterType="GroupMember" resultType="GroupMember">
+        select gm.id,
+               gm.groupid,
+               g.groupname,
+               g.category,
+               gm.memberid,
+               u.username,
+               u.displayname,
+               gm.type,
+               gm.createddate
+        from mxk_group_member gm
+        join mxk_groups g on g.id = gm.groupid and g.instid = #{instId}
+        join mxk_userinfo u on u.id = gm.memberid and u.instid = #{instId}
+        where gm.instid = #{instId}
+        <if test="groupId != null and groupId != ''">
+            and gm.groupid = #{groupId}
+        </if>
+        <if test="username != null and username != ''">
+            and u.username = #{username}
+        </if>
+        order by g.groupname, u.username
+    </select>
+
+    <select id="noMember" parameterType="GroupMember" resultType="Groups">
+        select g.*
+        from mxk_groups g
+        where g.instid = #{instId}
+          and not exists (
+              select 1
+              from mxk_group_member gm
+              join mxk_userinfo u on u.id = gm.memberid and u.instid = #{instId}
+              where gm.instid = #{instId}
+                and gm.groupid = g.id
+                <if test="username != null and username != ''">
+                    and u.username = #{username}
+                </if>
+          )
+        <if test="groupName != null and groupName != ''">
+            and g.groupname like concat('%', #{groupName}, '%')
+        </if>
+        order by g.groupname
+    </select>
+
+    <!-- GROUP_MEMBER  Group Member-->
+    <select id="groupMemberInGroup" parameterType="GroupMember" resultType="Groups">
+        select distinct
+        ig.*
+        from
+        mxk_groups ig,
+        mxk_groups g,
+        mxk_group_member gm
+        where
+        1 = 1
+        and gm.groupid = g.id
+        and gm.memberid = ig.id
+        and gm.type = 'GROUP'
+        <if test="groupId != null and groupId != ''">
+            and gm.groupid = #{groupId}
+            and g.id = #{groupId}
+        </if>
+        <if test="groupName != null and groupName != ''">
+            and g.groupname = #{groupName}
+        </if>
+    </select>
+
+    <update id="addDynamicMember" parameterType="Groups">
+        insert into mxk_group_member(
+        id,
+        groupid,
+        memberid,
+        type,
+        createddate,
+        instid
+        )
+        select
+        md5(concat(#{id}, ':', u.id)) id,
+        #{id} groupid,
+        u.id memberid,
+        'USER-DYNAMIC' type,
+        current_timestamp createddate,
+        u.instid
+        from mxk_userinfo u
+        where u.instid = #{instId}
+        and not exists(
+        select 1 from mxk_group_member gm
+        where gm.groupid=#{id}
+        and gm.memberid=u.id
+        and gm.type='USER-DYNAMIC'
+        )
+        <if test="orgIds != null and orgIds.size() > 0">
+				and u.departmentid in ( 
+				<foreach collection="orgIds" item="item" separator=",">
+                    #{item}
+                </foreach>
+				)
+		</if>
+    </update>
+
+    <delete id="deleteDynamicMember" parameterType="Groups">
+        delete from mxk_group_member gm
+        where type = 'USER-DYNAMIC'
+        and gm.groupid=#{id}
+        and gm.instid=#{instId}
+        and not exists(
+        select 1
+        from mxk_userinfo u
+        where 1 = 1
+        and u.id=gm.memberid
+        <if test="orgIds != null and orgIds.size() > 0">
+				and u.departmentid in ( 
+				<foreach collection="orgIds" item="item" separator=",">
+                    #{item}
+                </foreach>
+				)
+		</if>
+        )
+    </delete>
+
+    <select id="queryMemberByGroupId" parameterType="string" resultType="UserInfo">
+        select distinct u.id,
+                        u.username,
+                        u.usertype,
+                        u.windowsaccount,
+
+                        u.displayname,
+                        u.nickname,
+                        u.namezhspell,
+                        u.namezhshortspell,
+                        u.givenname,
+                        u.middlename,
+                        u.familyname,
+
+                        u.gender,
+
+                        u.authntype,
+                        u.mobile,
+                        u.email,
+                        u.workemail,
+                        u.workphonenumber,
+
+                        u.employeenumber,
+                        u.division,
+                        u.costcenter,
+                        u.organization,
+                        u.departmentid,
+                        u.department,
+                        u.jobtitle,
+                        u.joblevel,
+                        gm.createddate,
+                        u.status
+        from mxk_userinfo u,
+             mxk_groups g,
+             mxk_group_member gm
+        where 1 = 1
+          and gm.groupid = #{value}
+          and g.id = #{value}
+          and gm.type in ('USER', 'USER-DYNAMIC')
+          and gm.groupid = g.id
+          and gm.memberid = u.id
+    </select>
+
+
+    <delete id="deleteByGroupId" parameterType="string">
+        delete
+        from mxk_group_member gm
+        where gm.groupid = #{value}
+    </delete>
+
+</mapper>

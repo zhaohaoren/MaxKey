@@ -96,12 +96,38 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
 
     private SocialsAssociate provisionFeishuUser(SocialsAssociate socialsAssociate) {
         JSONObject feishuUser = JSON.parseObject(socialsAssociate.getSocialUserInfo());
+        String enterpriseEmail = StringUtils.lowerCase(getFeishuEnterpriseEmail(socialsAssociate));
+        if (StringUtils.isBlank(enterpriseEmail)) {
+            return null;
+        }
+
+        // Reuse an existing account with the verified enterprise email instead of
+        // creating a duplicate user when the social mapping is missing.
+        UserInfo existingUser = userInfoService.findByEmailAndInstId(
+                enterpriseEmail, socialsAssociate.getInstId());
+        if (existingUser != null) {
+            if (existingUser.getStatus() != ConstsStatus.ACTIVE) {
+                return null;
+            }
+            socialsAssociate.setUserId(existingUser.getId());
+            socialsAssociate.setUsername(existingUser.getUsername());
+            socialsAssociate.setExAttribute(FEISHU_PASSWORD_STATE_MARKER);
+            try {
+                if (socialsAssociateService.insert(socialsAssociate)) {
+                    return socialsAssociate;
+                }
+            } catch (RuntimeException e) {
+                _logger.warn("Feishu social mapping insert raced for {}", enterpriseEmail, e);
+            }
+            return socialsAssociateService.get(socialsAssociate);
+        }
+
         UserInfo userInfo = new UserInfo();
         userInfo.setId(userInfo.generateId());
-        userInfo.setUsername("feishu_" + socialsAssociate.getSocialUserId());
+        userInfo.setUsername(enterpriseEmail);
         userInfo.setDisplayName(feishuUser.getString("name"));
         userInfo.setNickName(feishuUser.getString("name"));
-        userInfo.setEmail(getFeishuEnterpriseEmail(socialsAssociate));
+        userInfo.setEmail(enterpriseEmail);
         userInfo.setPassword(userInfoService.randomPassword());
         userInfo.setPasswordSetType(ConstsPasswordSetType.PASSWORD_NOT_SET);
         userInfo.setUserType("EMPLOYEE");
@@ -113,14 +139,25 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
             return null;
         }
 
+        // passwordSetType is maintained by a dedicated mapper update and is not
+        // part of the generic UserInfo insert column set.
+        if (!userInfoService.updatePasswordSetType(userInfo)) {
+            userInfoService.delete(userInfo);
+            return null;
+        }
+
         socialsAssociate.setUserId(userInfo.getId());
         socialsAssociate.setUsername(userInfo.getUsername());
         socialsAssociate.setExAttribute(FEISHU_PASSWORD_STATE_MARKER);
-        if (socialsAssociateService.insert(socialsAssociate)) {
-            return socialsAssociate;
+        try {
+            if (socialsAssociateService.insert(socialsAssociate)) {
+                return socialsAssociate;
+            }
+        } catch (RuntimeException e) {
+            _logger.error("Failed to create Feishu social mapping for {}", enterpriseEmail, e);
         }
         userInfoService.delete(userInfo);
-        return null;
+        return socialsAssociateService.get(socialsAssociate);
     }
 
     /**
@@ -128,30 +165,36 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
      * password. Mark them once, without resetting users who subsequently chose a password.
      */
     private void migrateLegacyFeishuPasswordState(SocialsAssociate socialsAssociate) {
-        if (socialsAssociate == null
-                || StringUtils.isNotBlank(socialsAssociate.getExAttribute())
-                || !StringUtils.startsWith(socialsAssociate.getUsername(), "feishu_")) {
+        if (socialsAssociate == null) {
             return;
         }
 
-        UserInfo userInfo = userInfoService.get(socialsAssociate.getUserId());
+        UserInfo userInfo = userInfoService.findByUsernameAndInstId(
+                socialsAssociate.getUsername(), socialsAssociate.getInstId());
         if (userInfo == null) {
             return;
         }
 
+        boolean feishuProvisionedAccount = StringUtils.startsWith(userInfo.getUsername(), "feishu_")
+                || (StringUtils.equals(FEISHU_PASSWORD_STATE_MARKER, socialsAssociate.getExAttribute())
+                        && StringUtils.equalsIgnoreCase(
+                                userInfo.getUsername(), getFeishuEnterpriseEmail(socialsAssociate)));
         boolean generatedPasswordUnchanged = userInfo.getPasswordSetType() == ConstsPasswordSetType.PASSWORD_NORMAL
                 && userInfo.getCreatedDate() != null
                 && userInfo.getPasswordLastSetTime() != null
-                && Math.abs(userInfo.getPasswordLastSetTime().getTime() - userInfo.getCreatedDate().getTime())
-                        <= PROVISIONING_TIME_TOLERANCE_MILLIS;
-        if (generatedPasswordUnchanged) {
+                && (userInfo.getPasswordLastSetTime().before(userInfo.getCreatedDate())
+                        || Math.abs(userInfo.getPasswordLastSetTime().getTime()
+                                - userInfo.getCreatedDate().getTime()) <= PROVISIONING_TIME_TOLERANCE_MILLIS);
+        if (feishuProvisionedAccount && generatedPasswordUnchanged) {
             userInfo.setPasswordSetType(ConstsPasswordSetType.PASSWORD_NOT_SET);
             if (!userInfoService.updatePasswordSetType(userInfo)) {
                 _logger.warn("Failed to migrate Feishu password state for user {}", userInfo.getUsername());
                 return;
             }
         }
-        socialsAssociate.setExAttribute(FEISHU_PASSWORD_STATE_MARKER);
+        if (feishuProvisionedAccount) {
+            socialsAssociate.setExAttribute(FEISHU_PASSWORD_STATE_MARKER);
+        }
     }
 
     @GetMapping("/authorize/{provider}")
@@ -244,6 +287,9 @@ public class SocialSignOnEndpoint  extends AbstractSocialSignOnEndpoint{
                 if ("feishu".equalsIgnoreCase(provider)
                         && StringUtils.isNotEmpty(socialsAssociate.getSocialUserInfo())) {
                     socialssssociate1 = provisionFeishuUser(socialsAssociate);
+                }
+                if ("feishu".equalsIgnoreCase(provider) && socialssssociate1 == null) {
+                    return new Message<>(Message.FAIL, "该企业邮箱对应的用户没有访问权限或自动注册失败，请联系管理员授权");
                 }
                 //如果存在第三方ID并且在数据库无法找到映射关系，则进行绑定逻辑
                 if (socialssssociate1 == null && StringUtils.isNotEmpty(socialsAssociate.getSocialUserId())) {

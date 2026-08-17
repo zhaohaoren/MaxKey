@@ -19,9 +19,9 @@ spring:
           # /oauth2/authorization/maxkey 和 /login/oauth2/code/maxkey。
           maxkey:
             # MaxKey 分配给 DemoTest 的公开标识。它也会成为 id_token 的 audience(aud)。
-            client-id: ${MAXKEY_CLIENT_ID:1285345198733332480}
+            client-id: ${MAXKEY_CLIENT_ID:1285427541930172416}
             # 机密客户端凭证，仅允许保存在后端。生产环境必须通过环境变量注入，绝不能放进 Vue 或提交真实生产密钥。
-            client-secret: ${MAXKEY_CLIENT_SECRET:T56yMTMwODIwMjYxODI0MDE1NjgULZ}
+            client-secret: ${MAXKEY_CLIENT_SECRET:tBu5MTMwODIwMjYyMzUxMTM3MTY1jf}
             # 换取 Token 时，将 client_id/client_secret 放在 application/x-www-form-urlencoded 请求体中。
             # MaxKey 当前接口按此方式对接；其他 Provider 也可能要求 client_secret_basic。
             client-authentication-method: client_secret_post

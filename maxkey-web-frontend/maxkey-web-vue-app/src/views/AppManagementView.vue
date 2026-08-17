@@ -1,75 +1,85 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { CheckCircleFilled } from '@ant-design/icons-vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
-import { useRouter } from 'vue-router'
+import ApplicationEditor from '../components/ApplicationEditor.vue'
 import DefaultLayout from '../components/DefaultLayout.vue'
 import { adminDelete, adminGet, adminPost, adminPut } from '../api'
 
-interface AppRow { id?: string; appName?: string; protocol?: string; category?: string; loginUrl?: string; status?: number; [key: string]: unknown }
-interface Field { key: string; label: string; type?: 'text' | 'number' | 'textarea' | 'select'; options?: string[]; required?: boolean }
-
-const protocols = [
-  { value: 'OAuth_v2.0', label: 'OAuth 2.0' }, { value: 'OAuth_v2.1', label: 'OAuth 2.1' },
-  { value: 'OpenID_Connect_v1.0', label: 'OpenID Connect' }, { value: 'SAML_v2.0', label: 'SAML 2.0' },
-  { value: 'CAS', label: 'CAS' }, { value: 'JWT', label: 'JWT' }, { value: 'Token_Based', label: 'Token Based' },
-  { value: 'Form_Based', label: 'Form Based' }, { value: 'Extend_API', label: 'Extend API' }, { value: 'Basic', label: 'Basic' },
-]
-
-const commonFields: Field[] = [
-  { key: 'appName', label: '应用名称', required: true }, { key: 'loginUrl', label: '登录地址' },
-  { key: 'category', label: '应用分类' }, { key: 'vendor', label: '厂商' }, { key: 'vendorUrl', label: '厂商地址' },
-  { key: 'logoutUrl', label: '退出地址' }, { key: 'logoutType', label: '退出类型' },
-  { key: 'description', label: '说明', type: 'textarea' }, { key: 'iconBase64', label: '图标 Base64/URL', type: 'textarea' },
-  { key: 'sortIndex', label: '排序', type: 'number' }, { key: 'visible', label: '可见性' }, { key: 'status', label: '状态', type: 'select', options: ['0', '1'] },
-]
-
-const protocolFields: Record<string, Field[]> = {
-  oauth20: [
-    { key: 'clientId', label: 'Client ID' }, { key: 'clientSecret', label: 'Client Secret' },
-    { key: 'registeredRedirectUris', label: '回调地址', type: 'textarea' }, { key: 'scope', label: 'Scope' },
-    { key: 'authorizedGrantTypes', label: '授权类型' }, { key: 'accessTokenValiditySeconds', label: '访问令牌有效期', type: 'number' },
-    { key: 'refreshTokenValiditySeconds', label: '刷新令牌有效期', type: 'number' }, { key: 'approvalPrompt', label: '授权确认', type: 'select', options: ['force', 'auto'] },
-    { key: 'pkce', label: 'PKCE' }, { key: 'issuer', label: 'Issuer' }, { key: 'audience', label: 'Audience' },
-    { key: 'subject', label: 'Subject' }, { key: 'algorithm', label: '加密算法' }, { key: 'algorithmKey', label: '加密密钥', type: 'textarea' },
-    { key: 'signature', label: '签名算法' }, { key: 'signatureKey', label: '签名密钥', type: 'textarea' },
-  ],
-  saml20: [
-    { key: 'entityId', label: 'Entity ID' }, { key: 'spAcsUrl', label: 'ACS 地址' }, { key: 'issuer', label: 'Issuer' },
-    { key: 'audience', label: 'Audience' }, { key: 'binding', label: 'Binding' }, { key: 'nameidFormat', label: 'NameID Format' },
-    { key: 'nameIdConvert', label: 'NameID 转换' }, { key: 'signature', label: '签名算法' }, { key: 'digestMethod', label: '摘要算法' },
-    { key: 'encrypted', label: '加密方式' }, { key: 'validityInterval', label: '有效期', type: 'number' },
-    { key: 'certIssuer', label: '证书颁发者' }, { key: 'certSubject', label: '证书主题' }, { key: 'certExpiration', label: '证书有效期' },
-  ],
-  cas: [{ key: 'service', label: 'Service' }, { key: 'callbackUrl', label: '回调地址' }, { key: 'casUser', label: 'CAS 用户属性' }, { key: 'expires', label: '有效期', type: 'number' }],
-  jwt: [
-    { key: 'redirectUri', label: '回调地址' }, { key: 'jwtName', label: 'JWT 名称' }, { key: 'tokenType', label: 'Token 类型' },
-    { key: 'issuer', label: 'Issuer' }, { key: 'audience', label: 'Audience' }, { key: 'subject', label: 'Subject' },
-    { key: 'algorithm', label: '加密算法' }, { key: 'algorithmKey', label: '加密密钥', type: 'textarea' },
-    { key: 'signature', label: '签名算法' }, { key: 'signatureKey', label: '签名密钥', type: 'textarea' }, { key: 'expires', label: '有效期', type: 'number' },
-  ],
-  tokenbased: [{ key: 'redirectUri', label: '回调地址' }, { key: 'tokenType', label: 'Token 类型' }, { key: 'cookieName', label: 'Cookie 名称' }, { key: 'algorithm', label: '算法' }, { key: 'algorithmKey', label: '算法密钥', type: 'textarea' }, { key: 'userPropertys', label: '用户属性' }, { key: 'expires', label: '有效期', type: 'number' }],
-  formbased: [{ key: 'redirectUri', label: '回调地址' }, { key: 'usernameMapping', label: '用户名字段' }, { key: 'passwordMapping', label: '密码字段' }, { key: 'passwordAlgorithm', label: '密码算法' }, { key: 'authorizeView', label: '认证页面' }, { key: 'credential', label: '凭证模式' }, { key: 'sharedUsername', label: '共享账号' }, { key: 'sharedPassword', label: '共享密码' }],
-  extendapi: [{ key: 'principal', label: '接口账号' }, { key: 'credentials', label: '接口凭证' }, { key: 'credential', label: '凭证模式' }, { key: 'systemUserAttr', label: '系统用户属性' }, { key: 'sharedUsername', label: '共享账号' }, { key: 'sharedPassword', label: '共享密码' }],
-  basic: [],
+interface AppRow {
+  id?: string
+  appName?: string
+  protocol?: string
+  category?: string
+  iconBase64?: string
+  sortIndex?: number
+  status?: number
+  disabled?: boolean
+  [key: string]: unknown
 }
 
+interface ProtocolOption {
+  value: string
+  label: string
+  image: string
+  descriptionKey: string
+}
+
+const { t } = useI18n({ useScope: 'global' })
+
+const protocols = [
+  { value: '', label: 'ALL' },
+  { value: 'OAuth_v2.0', label: 'OAuth v2.0' },
+  { value: 'OAuth_v2.1', label: 'OAuth v2.1' },
+  { value: 'OpenID_Connect_v1.0', label: 'OpenID Connect v1.0' },
+  { value: 'SAML_v2.0', label: 'SAML v2.0' },
+  { value: 'CAS', label: 'CAS' },
+  { value: 'JWT', label: 'JWT' },
+  { value: 'Token_Based', label: 'Token Based' },
+  { value: 'Form_Based', label: 'Form Based' },
+  { value: 'Extend_API', label: 'Extend API' },
+  { value: 'Basic', label: 'Basic' },
+]
+
+const standardProtocols: ProtocolOption[] = [
+  { value: 'OAuth_v2.0', label: 'OAuth2.x', image: 'oauth2.png', descriptionKey: 'oauth2.0' },
+  { value: 'OpenID_Connect_v1.0', label: 'OpenID Connect', image: 'oidc.png', descriptionKey: 'oidc' },
+  { value: 'SAML_v2.0', label: 'SAML2.0', image: 'saml.jpg', descriptionKey: 'saml2.0' },
+  { value: 'CAS', label: 'CAS认证', image: 'cas.png', descriptionKey: 'cas' },
+  { value: 'JWT', label: 'JWT令牌', image: 'jwt.jpg', descriptionKey: 'jwt' },
+]
+
+const customProtocols: ProtocolOption[] = [
+  { value: 'Token_Based', label: '令牌认证', image: 'token.png', descriptionKey: 'tokenbased' },
+  { value: 'Extend_API', label: 'API扩展认证', image: 'api.png', descriptionKey: 'extendapi' },
+  { value: 'Form_Based', label: '表单认证', image: 'form.png', descriptionKey: 'formbased' },
+  { value: 'Basic', label: '基本登录', image: 'basic.png', descriptionKey: 'basic' },
+]
+
 const rows = ref<AppRow[]>([])
-const router = useRouter()
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
-const modalOpen = ref(false)
+const protocolModalOpen = ref(false)
+const editorModalOpen = ref(false)
 const editing = ref(false)
+const selectedRowKeys = ref<string[]>([])
 const search = reactive({ appName: '', protocol: '' })
 const page = reactive({ current: 1, pageSize: 10, total: 0 })
 const form = reactive<AppRow>({})
 
 function endpoint(protocol?: string) {
-  if (['OAuth_v2.0', 'OAuth_v2.1', 'OpenID_Connect_v1.0'].includes(protocol || '')) return 'oauth20'
-  return ({ 'SAML_v2.0': 'saml20', CAS: 'cas', JWT: 'jwt', Token_Based: 'tokenbased', Form_Based: 'formbased', Extend_API: 'extendapi', Basic: 'basic' } as Record<string, string>)[protocol || ''] || 'basic'
+  const value = String(protocol || '')
+  if (['OAuth_v2.0', 'OAuth_v2.1', 'OpenID_Connect_v1.0', 'oauth20', 'oauth2', 'oidc'].includes(value)) return 'oauth20'
+  return ({ 'SAML_v2.0': 'saml20', saml20: 'saml20', CAS: 'cas', cas: 'cas', JWT: 'jwt', jwt: 'jwt', Token_Based: 'tokenbased', tokenbased: 'tokenbased', Form_Based: 'formbased', formbased: 'formbased', Extend_API: 'extendapi', extendapi: 'extendapi', Basic: 'basic', basic: 'basic' } as Record<string, string>)[value] || 'basic'
 }
 
-const fields = computed(() => [...commonFields, ...(protocolFields[endpoint(form.protocol)] || [])])
+const rowSelection = computed(() => ({
+  selectedRowKeys: selectedRowKeys.value,
+  getCheckboxProps: (record: AppRow) => ({ disabled: record.disabled }),
+  onChange: (keys: Array<string | number>) => { selectedRowKeys.value = keys.map(String) },
+}))
 
 function normalizePage(data: unknown) {
   const value = (data || {}) as Record<string, unknown>
@@ -77,12 +87,43 @@ function normalizePage(data: unknown) {
   return { rows: list, total: typeof value.records === 'number' ? value.records : list.length }
 }
 
-async function load() {
-  loading.value = true; error.value = ''
+function categoryLabel(category?: string) {
+  return t(`admin.mxk.apps.category.${category || 'none'}`)
+}
+
+function protocolDescription(item: ProtocolOption) {
+  return t(`admin.mxk.apps.protocol.${item.descriptionKey}.discription`)
+}
+
+function protocolImage(image: string) {
+  return `${import.meta.env.BASE_URL}assets/protocol/${image}`
+}
+
+async function load(resetPage = false) {
+  if (resetPage) page.current = 1
+  loading.value = true
+  error.value = ''
+  selectedRowKeys.value = []
   try {
     const data = await adminGet<unknown>('/apps/fetch', { ...search, pageNumber: page.current, pageSize: page.pageSize })
-    const result = normalizePage(data); rows.value = result.rows; page.total = result.total
-  } catch (err) { error.value = err instanceof Error ? err.message : '应用列表加载失败' } finally { loading.value = false }
+    const result = normalizePage(data)
+    rows.value = result.rows
+    page.total = result.total
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '应用列表加载失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+function openProtocolSelector() {
+  protocolModalOpen.value = true
+}
+
+async function selectProtocol(protocol: string) {
+  protocolModalOpen.value = false
+  await nextTick()
+  await openEditor(undefined, protocol)
 }
 
 async function openEditor(row?: AppRow, protocol?: string) {
@@ -91,52 +132,239 @@ async function openEditor(row?: AppRow, protocol?: string) {
   const selectedProtocol = row?.protocol || protocol || 'Basic'
   const api = endpoint(selectedProtocol)
   try {
-    const data = row?.id ? await adminGet<AppRow>(`${api === 'basic' ? '/apps' : `/apps/${api}`}/get/${row.id}`) : await adminGet<AppRow>(`${api === 'basic' ? '/apps' : `/apps/${api}`}/init`)
-    Object.assign(form, data || {}, { protocol: row?.protocol || selectedProtocol })
+    const base = api === 'basic' ? '/apps' : `/apps/${api}`
+    const data = row?.id
+      ? await adminGet<AppRow>(`${base}/get/${row.id}`)
+      : await adminGet<AppRow>(`${base}/init`)
+    Object.assign(form, protocolDefaults(selectedProtocol), data || {}, { protocol: row?.protocol || selectedProtocol })
+    if (api === 'saml20') form.fileType = 'certificate'
+    if (api === 'oauth20') {
+      form.select_scope = splitValues(form.scope)
+      form.select_authorizedGrantTypes = splitValues(form.authorizedGrantTypes)
+    }
+    if (api === 'tokenbased') form.select_userPropertys = splitValues(form.userPropertys)
     if (!row && api === 'oauth20') {
       form.clientId = form.clientId || form.id
       form.clientSecret = form.clientSecret || form.secret
     }
   } catch (err) {
     if (row) Object.assign(form, row)
-    else { error.value = err instanceof Error ? err.message : '应用初始化失败'; return }
+    else {
+      message.error(err instanceof Error ? err.message : '应用初始化失败')
+      return
+    }
   }
-  modalOpen.value = true
+  editorModalOpen.value = true
 }
 
 async function save() {
-  if (!form.appName || !form.protocol) { message.warning('请填写应用名称并选择协议'); return }
+  if (!form.appName || !form.protocol) {
+    message.warning('请填写应用名称并选择协议')
+    return
+  }
   saving.value = true
   const api = endpoint(form.protocol)
   const base = api === 'basic' ? '/apps' : `/apps/${api}`
   try {
-    if (editing.value) await adminPut(`${base}/update`, form)
-    else await adminPost(`${base}/add`, form)
-    message.success(editing.value ? '应用修改成功' : '应用新增成功'); modalOpen.value = false; await load()
-  } catch (err) { message.error(err instanceof Error ? err.message : '应用保存失败') } finally { saving.value = false }
+    const payload = { ...form }
+    if (api === 'oauth20') {
+      payload.scope = joinValues(form.select_scope)
+      payload.authorizedGrantTypes = joinValues(form.select_authorizedGrantTypes)
+    }
+    if (api === 'tokenbased') payload.userPropertys = joinValues(form.select_userPropertys)
+    if (editing.value) await adminPut(`${base}/update`, payload)
+    else await adminPost(`${base}/add`, payload)
+    message.success(editing.value ? '应用修改成功' : '应用新增成功')
+    editorModalOpen.value = false
+    await load()
+  } catch (err) {
+    message.error(err instanceof Error ? err.message : '应用保存失败')
+  } finally {
+    saving.value = false
+  }
 }
 
-function remove(row: AppRow) {
-  if (!row.id) return
-  Modal.confirm({ title: `确认删除应用 ${row.appName || ''}？`, async onOk() { try { await adminDelete('/apps/delete', { ids: row.id }); message.success('应用已删除'); await load() } catch (err) { message.error(err instanceof Error ? err.message : '删除失败') } } })
+async function generateSecret() {
+  try {
+    const type = form.protocol === 'Token_Based' ? String(form.algorithm || 'base') : 'base'
+    const data = await adminGet<unknown>(`/apps/generate/secret/${type}`, form.id ? { id: form.id } : undefined)
+    const value = typeof data === 'string' ? data : (data as AppRow | undefined)?.secret
+    if (value) {
+      form.secret = value
+      form.clientSecret = value
+    }
+    message.success('密钥已生成')
+  } catch (err) {
+    message.error(err instanceof Error ? err.message : '密钥生成失败')
+  }
 }
 
-function openPermission(row: AppRow, target: 'permission' | 'resources') {
-  if (!row.id) return
-  router.push({ path: `/admin/${target}`, query: { appId: row.id, appName: String(row.appName || '') } })
+async function generateKey(fieldKey: string, type?: string) {
+  try {
+    const secretType = type || String(form.algorithm || form.signature || 'base')
+    const data = await adminGet<unknown>(`/apps/generate/secret/${secretType}`, form.id ? { id: form.id } : undefined)
+    const value = typeof data === 'string' ? data : (data as AppRow | undefined)?.secret
+    if (value) form[fieldKey] = value
+    message.success('密钥已生成')
+  } catch (err) {
+    message.error(err instanceof Error ? err.message : '密钥生成失败')
+  }
 }
 
-function onTableChange(pagination: { current?: number; pageSize?: number }) { page.current = pagination.current || 1; page.pageSize = pagination.pageSize || 10; load() }
-function component(field: Field) { return field.type === 'textarea' ? 'a-textarea' : field.type === 'number' ? 'a-input-number' : field.type === 'select' ? 'a-select' : 'a-input' }
-onMounted(load)
+function confirmDelete(ids: string[], appName = '') {
+  if (!ids.length) return
+  Modal.confirm({
+    title: t('admin.mxk.text.delete.popconfirm.title'),
+    content: appName,
+    cancelText: t('admin.mxk.text.delete.popconfirm.cancelText'),
+    okText: t('admin.mxk.text.delete.popconfirm.okText'),
+    okType: 'danger',
+    async onOk() {
+      try {
+        await adminDelete('/apps/delete', { ids: ids.join(',') })
+        message.success(t('admin.mxk.alert.delete.success'))
+        await load()
+      } catch (err) {
+        message.error(err instanceof Error ? err.message : t('admin.mxk.alert.delete.error'))
+      }
+    },
+  })
+}
+
+function onTableChange(pagination: { current?: number; pageSize?: number }) {
+  const sizeChanged = pagination.pageSize && pagination.pageSize !== page.pageSize
+  page.pageSize = pagination.pageSize || 10
+  page.current = sizeChanged ? 1 : pagination.current || 1
+  void load()
+}
+
+function splitValues(value: unknown) {
+  return String(value || '').split(',').map(item => item.trim()).filter(Boolean)
+}
+
+function joinValues(value: unknown) {
+  return Array.isArray(value) ? value.filter(Boolean).join(',') : String(value || '')
+}
+
+function protocolDefaults(protocol: string): AppRow {
+  const common: AppRow = { category: 'none', frequently: 'no', resourceMgt: 'false', visible: '0', isAdapter: '0', logoutType: '0', isExtendAttr: '0', status: 0 }
+  if (['OAuth_v2.0', 'OAuth_v2.1', 'OpenID_Connect_v1.0'].includes(protocol)) return { ...common, select_authorizedGrantTypes: ['authorization_code'], select_scope: ['read'], pkce: 'no', approvalPrompt: 'auto', accessTokenValiditySeconds: '300', refreshTokenValiditySeconds: '300', subject: 'username' }
+  if (protocol === 'SAML_v2.0') return { ...common, fileType: 'certificate', validityInterval: '300', nameidFormat: 'persistent', nameIdConvert: 'original', signature: 'RSAwithSHA1', digestMethod: 'SHA1', encrypted: 'no', binding: 'Redirect-Post' }
+  if (protocol === 'CAS') return { ...common, expires: 300, casUser: 'username' }
+  if (protocol === 'JWT') return { ...common, expires: 300, jwtName: 'jwt', subject: 'username', tokenType: 'POST' }
+  if (protocol === 'Token_Based') return { ...common, expires: 300, tokenType: 'POST', cookieName: 'ltpa_token', algorithm: 'AES', select_userPropertys: [] }
+  if (protocol === 'Form_Based') return { ...common, usernameMapping: 'username', passwordMapping: 'password', passwordAlgorithm: 'NONE' }
+  return common
+}
+
+onMounted(() => load())
 </script>
 
 <template>
   <DefaultLayout mode="admin">
-    <div class="alain-default__content-title"><div><h1>应用管理</h1><small>基础信息与协议配置统一维护</small></div><a-dropdown><a-button type="primary">新增应用</a-button><template #overlay><a-menu><a-menu-item v-for="item in protocols" :key="item.value" @click="openEditor(undefined, item.value)">{{ item.label }}</a-menu-item></a-menu></template></a-dropdown></div>
+    <div class="alain-default__content-title"><h1>应用管理</h1></div>
     <a-alert v-if="error" type="error" show-icon :message="error" />
-    <a-card class="admin-page-card"><a-form layout="inline" @submit.prevent="load"><a-form-item label="应用名称"><a-input v-model:value="search.appName" allow-clear /></a-form-item><a-form-item label="协议"><a-select v-model:value="search.protocol" allow-clear style="width: 200px"><a-select-option v-for="item in protocols" :key="item.value" :value="item.value">{{ item.label }}</a-select-option></a-select></a-form-item><a-button type="primary" html-type="submit">查询</a-button></a-form></a-card>
-    <a-card><a-table :data-source="rows" :loading="loading" row-key="id" :pagination="{ current: page.current, pageSize: page.pageSize, total: page.total, showSizeChanger: true }" @change="onTableChange"><a-table-column title="应用名称" data-index="appName" /><a-table-column title="协议" data-index="protocol" /><a-table-column title="分类" data-index="category" /><a-table-column title="登录地址" data-index="loginUrl" /><a-table-column title="状态" data-index="status" /><a-table-column title="操作" :width="300"><template #default="{ record }"><a-button type="link" @click="openEditor(record)">编辑</a-button><a-button type="link" @click="openPermission(record, 'resources')">资源</a-button><a-button type="link" @click="openPermission(record, 'permission')">用户组权限</a-button><a-button danger type="link" @click="remove(record)">删除</a-button></template></a-table-column></a-table></a-card>
-    <a-modal v-model:open="modalOpen" :title="editing ? '编辑应用' : '新增应用'" width="920px" :confirm-loading="saving" @ok="save"><a-alert type="info" show-icon :message="`当前协议：${form.protocol || ''}`" /><a-form layout="vertical"><a-row :gutter="16"><a-col v-for="field in fields" :key="field.key" :xs="24" :md="field.type === 'textarea' ? 24 : 12"><a-form-item :label="field.label" :required="field.required"><component :is="component(field)" v-model:value="form[field.key]" :style="{ width: '100%' }"><template v-if="field.type === 'select'"><a-select-option v-for="option in field.options" :key="option" :value="field.key === 'status' ? Number(option) : option">{{ option }}</a-select-option></template></component></a-form-item></a-col></a-row></a-form></a-modal>
+
+    <a-card :bordered="false" class="apps-search-card">
+      <a-form layout="inline" @submit.prevent="load(true)">
+        <a-row :gutter="{ xs: 8, sm: 8, md: 24, lg: 24, xl: 48, xxl: 48 }" class="apps-search-row">
+          <a-col :xs="24" :md="10">
+            <a-form-item :label="t('admin.mxk.apps.name')">
+              <a-input v-model:value="search.appName" />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="10">
+            <a-form-item label="协议">
+              <a-select v-model:value="search.protocol">
+                <a-select-option v-for="item in protocols" :key="item.value || 'all'" :value="item.value">{{ item.label }}</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="4">
+            <a-form-item><a-button type="primary" html-type="submit">{{ t('admin.mxk.text.query') }}</a-button></a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </a-card>
+
+    <a-card class="apps-table-card">
+      <div class="table-list-toolbar">
+        <a-button type="primary" @click="openProtocolSelector">{{ t('admin.mxk.text.add') }}</a-button>
+        <a-button type="primary" danger :disabled="selectedRowKeys.length === 0" @click="confirmDelete(selectedRowKeys)">{{ t('admin.mxk.text.batchDelete') }}</a-button>
+      </div>
+      <a-table
+        bordered
+        size="small"
+        row-key="id"
+        :data-source="rows"
+        :loading="loading"
+        :row-selection="rowSelection"
+        :pagination="{ current: page.current, pageSize: page.pageSize, total: page.total, pageSizeOptions: ['10', '20', '50'], showSizeChanger: true }"
+        :scroll="{ x: 1040 }"
+        @change="onTableChange"
+      >
+        <a-table-column align="center" :title="t('admin.mxk.apps.icon')" :width="72">
+          <template #default="{ record }"><img v-if="record.iconBase64" class="application-icon" :src="record.iconBase64" alt="" /></template>
+        </a-table-column>
+        <a-table-column :title="t('admin.mxk.text.id')" data-index="id" :width="250" />
+        <a-table-column :title="t('admin.mxk.apps.name')" data-index="appName" :width="180" />
+        <a-table-column title="协议" data-index="protocol" :width="170" />
+        <a-table-column title="分类" :width="180">
+          <template #default="{ record }">{{ categoryLabel(record.category) }}</template>
+        </a-table-column>
+        <a-table-column :title="t('admin.mxk.text.sortIndex')" data-index="sortIndex" :width="72" />
+        <a-table-column align="center" title="状态" :width="72">
+          <template #default="{ record }"><CheckCircleFilled v-if="Number(record.status) === 1" class="enabled-icon" /></template>
+        </a-table-column>
+        <a-table-column align="center" :title="t('admin.mxk.text.action')" :width="180" fixed="right">
+          <template #default="{ record }">
+            <a-space>
+              <a-button @click="openEditor(record)">{{ t('admin.mxk.text.edit') }}</a-button>
+              <a-button danger @click="confirmDelete([record.id], record.appName)">删除</a-button>
+            </a-space>
+          </template>
+        </a-table-column>
+      </a-table>
+    </a-card>
+
+    <a-modal v-model:open="protocolModalOpen" :title="t('admin.mxk.text.select')" width="960px" :footer="null">
+      <a-tabs type="card">
+        <a-tab-pane key="standard" :tab="t('admin.mxk.apps.protocol.select.standard')">
+          <a-table bordered :data-source="standardProtocols" :pagination="false" row-key="value" size="middle">
+            <a-table-column align="center" :title="t('admin.mxk.apps.icon')" :width="90"><template #default="{ record }"><img class="protocol-icon" :src="protocolImage(record.image)" alt="" /></template></a-table-column>
+            <a-table-column title="协议" data-index="label" :width="180" />
+            <a-table-column :title="t('admin.mxk.text.description')"><template #default="{ record }">{{ protocolDescription(record) }}</template></a-table-column>
+            <a-table-column :title="t('admin.mxk.text.action')" :width="120"><template #default="{ record }"><a-button type="primary" @click="selectProtocol(record.value)">{{ t('admin.mxk.text.add') }}</a-button></template></a-table-column>
+          </a-table>
+        </a-tab-pane>
+        <a-tab-pane key="custom" :tab="t('admin.mxk.apps.protocol.select.custom')">
+          <a-table bordered :data-source="customProtocols" :pagination="false" row-key="value" size="middle">
+            <a-table-column align="center" :title="t('admin.mxk.apps.icon')" :width="90"><template #default="{ record }"><img class="protocol-icon" :src="protocolImage(record.image)" alt="" /></template></a-table-column>
+            <a-table-column title="协议" data-index="label" :width="180" />
+            <a-table-column :title="t('admin.mxk.text.description')"><template #default="{ record }">{{ protocolDescription(record) }}</template></a-table-column>
+            <a-table-column :title="t('admin.mxk.text.action')" :width="120"><template #default="{ record }"><a-button type="primary" @click="selectProtocol(record.value)">{{ t('admin.mxk.text.add') }}</a-button></template></a-table-column>
+          </a-table>
+        </a-tab-pane>
+      </a-tabs>
+    </a-modal>
+
+    <a-modal v-model:open="editorModalOpen" :title="editing ? '编辑' : '新增'" :width="editing ? '800px' : '960px'" :confirm-loading="saving" cancel-text="关闭" ok-text="提交" @ok="save">
+      <ApplicationEditor :form="form" :editing="editing" @generate-secret="generateSecret" @generate-key="generateKey" />
+    </a-modal>
   </DefaultLayout>
 </template>
+
+<style scoped>
+.apps-search-card { margin-bottom: 24px; }
+.apps-search-row { width: 100%; }
+.apps-search-row :deep(.ant-form-item) { width: 100%; margin-bottom: 0; }
+.apps-search-row :deep(.ant-form-item-control) { flex: 1; }
+.apps-search-row :deep(.ant-select) { width: 100%; }
+.table-list-toolbar { display: flex; gap: 8px; margin-bottom: 16px; }
+.application-icon { display: block; width: auto; height: 30px; max-width: 48px; margin: 0 auto; object-fit: contain; }
+.protocol-icon { display: block; width: auto; height: 40px; max-width: 60px; margin: 0 auto; object-fit: contain; }
+.enabled-icon { color: green; font-size: 16px; }
+@media (max-width: 768px) {
+  .apps-search-row :deep(.ant-form-item) { margin-bottom: 16px; }
+}
+</style>

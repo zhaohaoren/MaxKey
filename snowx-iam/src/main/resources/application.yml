@@ -1,0 +1,94 @@
+server:
+  port: ${SERVER_PORT:9528}
+  servlet:
+    context-path: /sign
+    session:
+      timeout: ${SERVLET_SESSION_TIMEOUT:600s}
+
+spring:
+  application:
+    name: snowx-iam
+  main:
+    banner-mode: log
+  config:
+    import: classpath:application-maxkey.yml
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:snowx_iam}
+    username: ${DATABASE_USER:snowx}
+    password: ${DATABASE_PASSWORD:snowx}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  mail:
+    default-encoding: UTF-8
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:25}
+    username: ${MAIL_USER:}
+    password: ${MAIL_PASSWORD:}
+    protocol: smtp
+    properties:
+      ssl: ${MAIL_SSL:false}
+      sender: ${MAIL_SENDER:no-reply@localhost}
+      mailotp:
+        message:
+          subject: SnowX IAM one-time password
+          template: "{0} Your token is {1}, valid for {2} minutes."
+          type: text
+          validity: 300
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: ${REDIS_TIMEOUT:10000}
+    jedis:
+      pool:
+        max-wait: 1000
+        max-idle: 100
+    lettuce:
+      pool:
+        max-active: -1
+        min-idle: 0
+  quartz:
+    job-store-type: memory
+
+application:
+  formatted-version: v1.0.0
+
+
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.snowx.iam.entity
+  configuration:
+    map-underscore-to-camel-case: false
+  global-config:
+    banner: false
+    db-config:
+      id-type: input
+      table-underline: false
+
+logging:
+  level:
+    com.snowx.iam.persistence.mapper: INFO
+
+management:
+  endpoints:
+    enabled-by-default: false
+  health:
+    mail:
+      enabled: false
+    redis:
+      enabled: false
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /swagger-ui/v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha

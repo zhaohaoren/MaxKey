@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { message, Modal } from 'ant-design-vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import DefaultLayout from '../components/DefaultLayout.vue'
 import { adminDelete, adminGet, adminPost, adminPostFormData, adminPut } from '../api'
 import { getAdminResource, type ResourceField } from '../adminResources'
@@ -23,8 +23,9 @@ interface TreeNodeData {
 }
 
 const route = useRoute()
+const router = useRouter()
 const resourceKey = computed(() => {
-  const value = String(route.params.resource || 'users')
+  const value = String(route.params.resource || route.meta.resource || 'users')
   return ({ session: 'sessions', audit: 'historys', synchronizer: 'synchronizers' } as Record<string, string>)[value] || value
 })
 const resource = computed(() => getAdminResource(resourceKey.value))
@@ -92,6 +93,9 @@ async function loadRows() {
     }
     resource.value.searchFields?.forEach(key => {
       if (search[key] !== undefined && search[key] !== '') params[key] = search[key]
+    })
+    Object.entries(route.query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') params[key] = Array.isArray(value) ? value.join(',') : value
     })
     const data = await adminGet<unknown>(`${resource.value.fetchPath || `${resource.value.base}/fetch`}`, params)
     const result = normalizePage(data)
@@ -414,7 +418,7 @@ function fieldComponent(field: ResourceField) {
   return 'a-input'
 }
 
-watch(resourceKey, async () => {
+watch(() => route.fullPath, async () => {
   page.current = 1
   Object.keys(search).forEach(key => delete search[key])
   selectedTreeKeys.value = []
@@ -482,7 +486,8 @@ watch(resourceKey, async () => {
                   <a-button v-if="hasEditor" type="link" size="small" @click="openEditor(record)">编辑</a-button>
                   <a-button v-if="resource.key === 'users'" type="link" size="small" @click="openUserAction(record, 'password')">密码</a-button>
                   <a-button v-if="resource.key === 'users'" type="link" size="small" @click="openUserAction(record, 'mfa')">MFA</a-button>
-                  <a-button v-if="['users', 'accounts'].includes(resource.key) && String(record.status) !== '1'" type="link" size="small" @click="updateStatus(record, 1)">启用</a-button>
+                  <a-button v-if="resource.key === 'users'" type="link" size="small" @click="router.push({ path: '/admin/groupmembers', query: { username: String(record.username || '') } })">用户组</a-button>
+                  <a-button v-if="['users', 'accounts'].includes(resource.key) && ['2', '4', '5'].includes(String(record.status))" type="link" size="small" @click="updateStatus(record, 1)">{{ String(record.status) === '5' ? '解锁' : '启用' }}</a-button>
                   <a-button v-if="['users', 'accounts'].includes(resource.key) && String(record.status) === '1'" type="link" size="small" @click="updateStatus(record, 4)">停用</a-button>
                   <a-button v-if="resource.key === 'users' && String(record.status) === '1'" type="link" size="small" @click="updateStatus(record, 5)">锁定</a-button>
                   <a-button v-if="resource.key === 'synchronizers'" type="link" size="small" @click="runSynchronizer(record)">执行</a-button>
@@ -501,7 +506,8 @@ watch(resourceKey, async () => {
     <a-modal v-model:open="modalOpen" :title="editing ? `编辑${resource.title}` : `新增${resource.title}`" :confirm-loading="saving" width="720px" @ok="save">
       <a-form layout="vertical">
         <a-form-item v-for="field in resource.fields" :key="field.key" :label="field.label" :required="field.required">
-          <component :is="fieldComponent(field)" v-model:value="form[field.key]" :placeholder="`请输入${field.label}`" :style="{ width: '100%' }">
+          <a-switch v-if="field.type === 'switch'" v-model:checked="form[field.key]" />
+          <component v-else :is="fieldComponent(field)" v-model:value="form[field.key]" :placeholder="`请输入${field.label}`" :style="{ width: '100%' }">
             <template v-if="field.type === 'select'">
               <a-select-option v-for="option in field.options" :key="String(option.value)" :value="option.value">{{ option.label }}</a-select-option>
             </template>

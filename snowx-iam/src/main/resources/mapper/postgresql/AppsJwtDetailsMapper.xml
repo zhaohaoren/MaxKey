@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snowx.iam.persistence.mapper.AppsJwtDetailsMapper">
+
+    <insert id="insert" parameterType="AppsJwtDetails">
+        insert into mxk_apps_jwt_details(
+            id, issuer, subject, audience, algorithmkey, algorithm, encryptionmethod,
+            signature, signaturekey, expires, redirecturi, jwtname, tokentype, instid)
+        values (
+            #{id}, #{issuer}, #{subject}, #{audience}, #{algorithmKey}, #{algorithm}, #{encryptionMethod},
+            #{signature}, #{signatureKey}, #{expires}, #{redirectUri}, #{jwtName}, #{tokenType}, #{instId})
+    </insert>
+
+    <update id="updateById" parameterType="AppsJwtDetails">
+        update mxk_apps_jwt_details
+        set issuer = #{et.issuer}, subject = #{et.subject}, audience = #{et.audience},
+            algorithmkey = #{et.algorithmKey}, algorithm = #{et.algorithm}, encryptionmethod = #{et.encryptionMethod},
+            signature = #{et.signature}, signaturekey = #{et.signatureKey}, expires = #{et.expires},
+            redirecturi = #{et.redirectUri}, jwtname = #{et.jwtName}, tokentype = #{et.tokenType}, instid = #{et.instId}
+        where id = #{et.id}
+    </update>
+
+    <select id="getAppDetails" parameterType="string" resultType="AppsJwtDetails">
+        select *
+        from mxk_apps_jwt_details jd,
+             mxk_apps app
+        where app.instid = jd.instid
+          and app.id = #{value}
+          and jd.id = #{value}
+          and status = 1
+          and jd.id = app.id
+    </select>
+
+</mapper>

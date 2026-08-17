@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snowx.iam.persistence.mapper.AppsFormBasedDetailsMapper">
+
+    <insert id="insert" parameterType="AppsFormBasedDetails">
+        insert into mxk_apps_form_based_details(
+            id, usernamemapping, passwordmapping, redirecturi, authorizeview, passwordalgorithm, instid)
+        values (
+            #{id}, #{usernameMapping}, #{passwordMapping}, #{redirectUri}, #{authorizeView}, #{passwordAlgorithm}, #{instId})
+    </insert>
+
+    <update id="updateById" parameterType="AppsFormBasedDetails">
+        update mxk_apps_form_based_details
+        set usernamemapping = #{et.usernameMapping}, passwordmapping = #{et.passwordMapping},
+            redirecturi = #{et.redirectUri}, authorizeview = #{et.authorizeView},
+            passwordalgorithm = #{et.passwordAlgorithm}, instid = #{et.instId}
+        where id = #{et.id}
+    </update>
+
+    <select id="getAppDetails" parameterType="string" resultType="AppsFormBasedDetails">
+        select *
+        from mxk_apps_form_based_details fbd,
+             mxk_apps app
+        where app.instId = fbd.instId
+          and app.id = #{value}
+          and fbd.id = #{value}
+          and fbd.id = app.id
+          and status = 1
+    </select>
+</mapper>

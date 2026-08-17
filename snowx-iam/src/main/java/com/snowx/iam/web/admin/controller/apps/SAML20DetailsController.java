@@ -1,0 +1,215 @@
+/*
+ * Copyright [2020] [MaxKey of copyright http://www.maxkey.top]
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+
+package com.snowx.iam.web.admin.controller.apps;
+
+import org.apache.commons.lang3.StringUtils;
+import com.snowx.iam.authn.annotation.CurrentUser;
+import com.snowx.iam.authz.saml20.metadata.MetadataDescriptorUtil;
+import com.snowx.iam.configuration.ApplicationConfig;
+import com.snowx.iam.constants.ConstsProtocols;
+import com.snowx.iam.crypto.cert.X509CertUtils;
+import com.snowx.iam.crypto.keystore.KeyStoreLoader;
+import com.snowx.iam.crypto.keystore.KeyStoreUtil;
+import com.snowx.iam.entity.Message;
+import com.snowx.iam.entity.apps.AppsSAML20Details;
+import com.snowx.iam.entity.idm.UserInfo;
+import com.snowx.iam.persistence.service.AppsSaml20DetailsService;
+import com.snowx.iam.util.StringGenerator;
+import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.util.List;
+
+
+@RestController
+@RequestMapping(value={"/admin/apps/saml20"})
+public class SAML20DetailsController   extends BaseAppContorller {
+    static final  Logger logger = LoggerFactory.getLogger(SAML20DetailsController.class);
+    
+    @Autowired
+    KeyStoreLoader keyStoreLoader;
+    
+    @Autowired
+    AppsSaml20DetailsService saml20DetailsService;
+    
+    @Autowired
+    ApplicationConfig applicationConfig;
+    
+    @RequestMapping(value = { "/init" }, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> init() {
+        AppsSAML20Details saml20Details=new AppsSAML20Details();
+        saml20Details.setSecret(StringGenerator.generateKey(""));
+        saml20Details.setProtocol(ConstsProtocols.SAML20);
+        saml20Details.setId(saml20Details.generateId());
+        return new Message<AppsSAML20Details>(saml20Details);
+    }
+    
+    @RequestMapping(value = { "/get/{id}" }, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> get(@PathVariable String id) {
+        AppsSAML20Details saml20Details=saml20DetailsService.get(id , false);
+        decoderSecret(saml20Details);
+        saml20Details.transIconBase64();
+        //modelAndView.addObject("authzURI",applicationConfig.getAuthzUri());
+        return new Message<AppsSAML20Details>(saml20Details);
+    }
+    
+    @ResponseBody
+    @RequestMapping(value={"/add"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> add(
+            @RequestBody AppsSAML20Details saml20Details,
+            @CurrentUser UserInfo currentUser) {
+        logger.debug("-Add  : {}" , saml20Details);
+        
+        try {
+            transform(saml20Details);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        saml20Details.setInstId(currentUser.getInstId());
+        saml20DetailsService.insert(saml20Details);
+        if (appsService.insertApp(saml20Details)) {
+            return new Message<AppsSAML20Details>(Message.SUCCESS);
+        } else {
+            return new Message<AppsSAML20Details>(Message.FAIL);
+        }
+    }
+    
+    @ResponseBody
+    @RequestMapping(value={"/update"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> update(
+            @RequestBody AppsSAML20Details saml20Details,
+            @CurrentUser UserInfo currentUser) {
+        logger.debug("-update  : {}" , saml20Details);
+        try {
+            transform(saml20Details);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        saml20Details.setInstId(currentUser.getInstId());
+        saml20DetailsService.update(saml20Details);
+        if (appsService.updateApp(saml20Details)) {
+            return new Message<AppsSAML20Details>(Message.SUCCESS);
+        } else {
+            return new Message<AppsSAML20Details>(Message.FAIL);
+        }
+    }
+    
+    @ResponseBody
+    @RequestMapping(value={"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> delete(
+            @RequestParam List<String> ids,
+            @CurrentUser UserInfo currentUser) {
+        logger.debug("-delete  ids : {} " , ids);
+        if (saml20DetailsService.deleteBatch(ids)&&appsService.deleteBatch(ids)) {
+             return new Message<AppsSAML20Details>(Message.SUCCESS);
+        } else {
+            return new Message<AppsSAML20Details>(Message.FAIL);
+        }
+    }
+    
+    protected AppsSAML20Details transform(AppsSAML20Details samlDetails) throws Exception{
+        super.transform(samlDetails);
+        ByteArrayInputStream bArrayInputStream = null;
+        if(StringUtils.isNotBlank(samlDetails.getMetaFileId())) {
+            bArrayInputStream = new ByteArrayInputStream(
+                    fileUploadService.get(samlDetails.getMetaFileId()).getUploaded());
+            fileUploadService.delete(samlDetails.getMetaFileId());
+        }
+        
+        if(StringUtils.isNotBlank(samlDetails.getFileType())){
+            if("certificate".equals(samlDetails.getFileType())){//certificate file
+                try {
+                    if(bArrayInputStream != null) {
+                        samlDetails.setTrustCert(
+                                X509CertUtils.loadCertFromInputStream(bArrayInputStream));
+                    }
+                } catch (IOException e) {
+                    logger.error("read certificate file error .", e);
+                }
+            }else if("metadata_file".equals(samlDetails.getFileType())){//metadata file
+                if(bArrayInputStream != null) {
+                    samlDetails = resolveMetaData(samlDetails,bArrayInputStream);
+                }
+            }
+        }
+            
+        if(samlDetails.getTrustCert()!=null) {
+            samlDetails.setCertSubject(samlDetails.getTrustCert().getSubjectDN().getName());
+            samlDetails.setCertExpiration(samlDetails.getTrustCert().getNotAfter().toString());
+        
+            samlDetails.setCertIssuer(X509CertUtils.getCommonName(samlDetails.getTrustCert().getIssuerX500Principal()));
+            
+            KeyStore keyStore = KeyStoreUtil.clone(keyStoreLoader.getKeyStore(),keyStoreLoader.getKeystorePassword());
+        
+            KeyStore trustKeyStore = null;
+            if (!"".equals(samlDetails.getEntityId())) {
+                trustKeyStore = KeyStoreUtil.importTrustCertificate(keyStore,samlDetails.getTrustCert(), samlDetails.getEntityId());
+            } else {
+                trustKeyStore = KeyStoreUtil.importTrustCertificate(keyStore,samlDetails.getTrustCert());
+            }
+        
+            byte[] keyStoreByte = KeyStoreUtil.keyStore2Bytes(trustKeyStore,keyStoreLoader.getKeystorePassword());
+        
+            // store KeyStore content
+            samlDetails.setKeyStore(keyStoreByte);
+        }
+        return samlDetails;
+    }
+    
+    public AppsSAML20Details resolveMetaData(AppsSAML20Details samlDetails,InputStream inputStream) throws Exception {
+        X509Certificate trustCert = null;
+        EntityDescriptor entityDescriptor;
+        try {
+            entityDescriptor = MetadataDescriptorUtil.getInstance().getEntityDescriptor(inputStream);
+        } catch (IOException e) {
+            logger.error("metadata  file resolve error .", e);
+            throw new Exception("metadata  file resolve error", e);
+        }
+        SPSSODescriptor sPSSODescriptor = entityDescriptor.getSPSSODescriptor(SAMLConstants.SAML20P_NS);
+        String b64Encoder = sPSSODescriptor.getKeyDescriptors().get(0).getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0).getValue();
+
+        trustCert = X509CertUtils.loadCertFromB64Encoded(b64Encoder);
+        
+        samlDetails.setTrustCert(trustCert);
+        samlDetails.setSpAcsUrl(sPSSODescriptor.getAssertionConsumerServices().get(0).getLocation());
+        samlDetails.setEntityId(entityDescriptor.getEntityID());
+        
+        if(samlDetails.getIssuer()==null || "".equals(samlDetails.getIssuer())) {
+            samlDetails.setIssuer(entityDescriptor.getEntityID());
+        }
+        
+        if(samlDetails.getAudience()==null || "".equals(samlDetails.getAudience())) {
+            samlDetails.setAudience(entityDescriptor.getEntityID());
+        }
+
+        logger.info("SPSSODescriptor EntityID {}", entityDescriptor.getEntityID());
+        return samlDetails;
+    }
+    
+}

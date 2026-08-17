@@ -46,6 +46,9 @@ public interface UserInfoMapper  extends IJpaMapper<UserInfo,String>{
     
     @Select("select * from  mxk_userinfo where ( email = #{value} or mobile= #{value} ) and status = " + ConstsStatus.ACTIVE)
     public UserInfo findByEmailMobile(String emailMobile);
+
+    @Select("select * from mxk_userinfo where email = #{email} and instid = #{instId} and status = " + ConstsStatus.ACTIVE)
+    public UserInfo findByEmailAndInstId(@Param("email") String email, @Param("instId") String instId);
      
     public List<Organizations> findDeptsByUserId(String userId);
     

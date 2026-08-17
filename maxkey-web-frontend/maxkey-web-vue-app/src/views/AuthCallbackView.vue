@@ -38,6 +38,9 @@ async function processSocial() {
     await finishLogin(await get<MaxKeyToken>(`/logon/oauth20/callback/${encodeURIComponent(provider)}?_allow_anonymous=true`, queryParams()))
   } catch (err) {
     if (err instanceof ApiError && err.code === 102) {
+      if (provider.toLowerCase() === 'feishu') {
+        throw new Error('飞书账号未完成授权，请使用企业邮箱登录并联系管理员授权')
+      }
       socialUserId.value = String(err.data || err.message || '')
       bindRequired.value = true
       return

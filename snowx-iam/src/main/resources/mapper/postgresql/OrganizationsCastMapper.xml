@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snowx.iam.persistence.mapper.OrganizationsCastMapper">
+    <select id="queryOrgs" parameterType="Organizations" resultType="Organizations">
+        select *
+        from mxk_organizations
+        where instid = #{instId}
+        <if test="id != null and id != ''">
+            and id = #{id}
+        </if>
+        <if test="orgName != null and orgName != ''">
+            and orgname like concat('%', #{orgName}, '%')
+        </if>
+        order by sortindex, id
+    </select>
+
+    <update id="updateCast" parameterType="OrganizationsCast">
+        update mxk_organizations_cast
+        set orgid = #{orgId},
+            orgparentid = #{orgParentId},
+            modifieddate = current_timestamp
+        where id = #{id}
+          and instid = #{instId}
+    </update>
+</mapper>

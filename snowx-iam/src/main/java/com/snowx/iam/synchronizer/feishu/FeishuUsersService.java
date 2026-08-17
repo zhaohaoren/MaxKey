@@ -1,0 +1,221 @@
+/*
+ * Copyright [2022] [MaxKey of copyright http://www.maxkey.top]
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+
+package com.snowx.iam.synchronizer.feishu;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.snowx.iam.constants.ConstsStatus;
+import com.snowx.iam.entity.SynchroRelated;
+import com.snowx.iam.entity.idm.UserInfo;
+import com.snowx.iam.http.AuthorizationHeaderUtils;
+import com.snowx.iam.http.HttpRequestAdapter;
+import com.snowx.iam.synchronizer.AbstractSynchronizerService;
+import com.snowx.iam.synchronizer.ISynchronizerService;
+import com.snowx.iam.entity.SynchroAssociation;
+import com.snowx.iam.synchronizer.feishu.entity.FeishuUsers;
+import com.snowx.iam.synchronizer.feishu.entity.FeishuUsersResponse;
+import com.snowx.iam.util.JsonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+
+import static com.snowx.iam.synchronizer.utils.FieldUtil.*;
+
+@Service
+public class FeishuUsersService extends AbstractSynchronizerService implements ISynchronizerService{
+    final static Logger _logger = LoggerFactory.getLogger(FeishuUsersService.class);
+
+    String access_token;
+    private static final Integer USER_TYPE = 1;
+    
+    static String USERS_URL="https://open.feishu.cn/open-apis/contact/v3/users/find_by_department?department_id=%s&page_size=50";
+    
+    @Override
+    public void sync() {
+        _logger.info("Sync Feishu Users...");
+        try {
+            List<SynchroRelated> synchroRelateds = 
+                    synchroRelatedService.findOrgs(this.synchronizer);
+                    
+            for(SynchroRelated relatedOrg : synchroRelateds) {
+                HttpRequestAdapter request =new HttpRequestAdapter();
+                HashMap<String,String> headers =new HashMap<String,String>();
+                headers.put("Authorization", AuthorizationHeaderUtils.createBearer(access_token));
+                String responseBody = request.get(String.format(USERS_URL,relatedOrg.getOriginId()),headers);
+                FeishuUsersResponse usersResponse  =JsonUtils.stringToObject(responseBody, FeishuUsersResponse.class);
+                // ######&& 打印飞书用户接口返回信息，便于核对字段映射。
+                _logger.info("######&& 飞书用户接口响应：departmentId={}, response={}",
+                        relatedOrg.getOriginId(), responseBody);
+                if(usersResponse.getCode() == 0 && usersResponse.getData().getItems() != null) {
+                    for(FeishuUsers feiShuUser : usersResponse.getData().getItems()) {
+                        _logger.info("######&& 飞书用户对象：{}", feiShuUser);
+                        UserInfo userInfo  = buildUserInfoByFieldMapper(feiShuUser,relatedOrg);
+                        _logger.debug("userInfo : " + userInfo);
+                        userInfo.setPassword(userInfo.getUsername() + UserInfo.DEFAULT_PASSWORD_SUFFIX);
+                        userInfoService.saveOrUpdate(userInfo);
+                        
+                        SynchroRelated synchroRelated = new SynchroRelated(
+                                userInfo.getId(),
+                                userInfo.getUsername(),
+                                userInfo.getDisplayName(),
+                                UserInfo.CLASS_TYPE,
+                                synchronizer.getId(),
+                                synchronizer.getName(),
+                                feiShuUser.getOpen_id(),
+                                feiShuUser.getName(),
+                                feiShuUser.getUser_id(),
+                                feiShuUser.getUnion_id(),
+                                synchronizer.getInstId());
+                        synchroRelatedService.updateSynchroRelated(
+                                this.synchronizer,synchroRelated,UserInfo.CLASS_TYPE);
+                        
+                        synchroRelated.setOriginId(feiShuUser.getUnion_id());
+                        socialsAssociate(synchroRelated,"feishu");
+                        
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+    }
+
+
+
+
+
+    
+    public void postSync(UserInfo userInfo) {
+        
+    }
+
+    public UserInfo buildUserInfo(FeishuUsers user,SynchroRelated relatedOrg) {
+        UserInfo userInfo = new  UserInfo();
+        userInfo.setId(userInfo.generateId());
+        userInfo.setUsername(user.getUser_id());//账号
+        userInfo.setNickName(user.getNickname());//名字
+        userInfo.setDisplayName(user.getName());//名字
+        
+        userInfo.setMobile(user.getMobile());//手机
+        userInfo.setEmail(resolveEmail(user));
+        userInfo.setGender(user.getGender());
+        
+        userInfo.setEmployeeNumber(user.getEmployee_no());
+        userInfo.setWorkPhoneNumber(user.getMobile());//工作电话
+        
+        userInfo.setDepartmentId(relatedOrg.getObjectId());
+        userInfo.setDepartment(relatedOrg.getObjectName());
+        
+        userInfo.setJobTitle(user.getJob_title());//职务
+        userInfo.setWorkAddressFormatted(user.getWork_station());//工作地点
+
+        //激活状态: 1=已激活，2=已禁用，4=未激活，5=退出企业。
+        if(user.getStatus().isIs_activated() ) {
+            userInfo.setStatus(ConstsStatus.ACTIVE);
+        }else {
+            userInfo.setStatus(ConstsStatus.INACTIVE);
+        }
+        userInfo.setInstId(this.synchronizer.getInstId());
+        return userInfo;
+    }
+
+    public UserInfo buildUserInfoByFieldMapper(FeishuUsers user,SynchroRelated relatedOrg){
+        UserInfo userInfo = new  UserInfo();
+        Map<String, String> fieldMap = this.getFiledMap(Long.parseLong(synchronizer.getId()));
+        for (Map.Entry<String, String> entry : fieldMap.entrySet()) {
+
+            String userInfoProperty = entry.getKey();
+            String sourceProperty = entry.getValue();
+
+            try {
+                Object sourceValue = null;
+                if("status".equals(sourceProperty)){
+                    if (user.getStatus().isIs_activated()) {
+                        setFieldValue(userInfo, "status", ConstsStatus.ACTIVE);
+                    } else {
+                        setFieldValue(userInfo, "status", ConstsStatus.INACTIVE);
+                    }
+                    continue;
+                }
+                // ######&& 飞书可能只返回企业邮箱，映射到 MaxKey 邮箱字段时使用企业邮箱兜底。
+                if ("email".equals(sourceProperty)) {
+                    sourceValue = resolveEmail(user);
+                }
+                if (hasField(user.getClass(), sourceProperty)) {
+                    if (sourceValue == null) {
+                        sourceValue = getFieldValue(user, sourceProperty);
+                    }
+                }
+                else if (hasField(SynchroRelated.class, sourceProperty)) {
+                    sourceValue = getFieldValue(relatedOrg, sourceProperty);
+                }
+
+                if (sourceValue != null) {
+                    setFieldValue(userInfo, userInfoProperty, sourceValue);
+                }
+
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        // 额外处理特定逻辑 ：意味着这些属性映射不能保存在数据库中。
+        try {
+            if(userInfo.getUsername() == null){
+                userInfo.setUsername(user.getOpen_id());
+            }
+            setFieldValue(userInfo, "id", userInfo.generateId());
+            setFieldValue(userInfo, "instId", this.synchronizer.getInstId());
+            userInfo.setUserType("EMPLOYEE");
+            userInfo.setUserState("RESIDENT");
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return userInfo;
+    }
+
+    private String resolveEmail(FeishuUsers user) {
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            return user.getEmail();
+        }
+        return user.getEnterprise_email();
+    }
+
+    public Map<String,String> getFiledMap(Long jobId){
+        Map<String,String> fieldMap = new HashMap<>();
+        //根据job id查询属性映射表
+        List<SynchroAssociation> syncJobConfigFieldList = synchroAssociationService.findBySyncId(jobId);
+        //获取用户属性映射
+        for(SynchroAssociation element:syncJobConfigFieldList){
+            if(Integer.parseInt(element.getObjectType()) == USER_TYPE.intValue()){
+                fieldMap.put(element.getTargetField(), element.getSourceField());
+            }
+        }
+        return fieldMap;
+    }
+
+    public void setAccess_token(String access_token) {
+        this.access_token = access_token;
+    }
+
+}

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snowx.iam.persistence.mapper.RolesMapper">
+
+    <sql id="where_statement">
+        <if test="id != null and id != ''">
+            and id = #{id}
+        </if>
+        <if test="roleName != null and roleName != ''">
+            and rolename like concat('%',#{roleName},'%')
+        </if>
+    </sql>
+
+    <select id="queryDynamicRoles" parameterType="Roles" resultType="Roles">
+        select
+        *
+        from
+        mxk_roles
+        where instid = #{instId}
+        and category = 'dynamic'
+        <include refid="where_statement"/>
+    </select>
+
+    <select id="queryPageResults" parameterType="Roles" resultType="Roles">
+        select
+        *
+        from
+        mxk_roles
+        where
+        instid = #{instId}
+        <include refid="where_statement"/>
+    </select>
+
+    <select id="queryRolesByUserId" parameterType="string" resultType="Roles">
+        select distinct r.*
+        from mxk_userinfo u
+        join mxk_role_member rm
+          on rm.memberid = u.id
+         and rm.instid = u.instid
+        join mxk_roles r
+          on r.id = rm.roleid
+         and r.instid = u.instid
+        where u.id = #{value}
+          and rm.type in ('USER', 'USER-DYNAMIC')
+    </select>
+
+
+    <update id="logisticDelete" parameterType="Roles">
+        update mxk_roles set
+        status = '2'
+        where instid = #{instId}
+        <if test="id != null">
+            and id = #{id}
+        </if>
+        <if test="roleName != null and roleName != ''">
+            and rolename = #{roleName}
+        </if>
+    </update>
+
+
+    <update id="logisticBatchDelete" parameterType="java.util.List">
+        update mxk_roles
+        set status='2'
+        where instid = #{instId}
+        and id in
+        <foreach item="item" collection="list" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+
+
+</mapper>

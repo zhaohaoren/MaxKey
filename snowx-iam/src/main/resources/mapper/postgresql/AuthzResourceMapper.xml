@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snowx.iam.persistence.mapper.AuthzResourceMapper">
+
+    <select id="queryGroupsByMembers" parameterType="QueryGroupMembersDto" resultType="Groups">
+        select distinct g.*
+        from mxk_groups g
+        left join mxk_group_member gm on gm.groupid = g.id and gm.instid = g.instid
+        where g.status = 1
+          and (g.groupcode = 'ROLE_ALL_USER'
+        <if test="members != null and members.size() > 0">
+          or gm.memberid in
+          <foreach collection="members" item="item" open="(" separator="," close=")">
+              #{item}
+          </foreach>
+        </if>
+          )
+    </select>
+
+    <select id="queryRolesByMembers" parameterType="QueryRoleMembersDto" resultType="Roles">
+        select distinct r.*
+        from mxk_roles r
+        left join mxk_role_member rm on rm.roleid = r.id and rm.instid = r.instid
+        where r.status = 1
+          and r.appid = #{appId}
+          and (r.rolecode = 'ROLE_ALL_USER'
+        <if test="members != null and members.size() > 0">
+          or rm.memberid in
+          <foreach collection="members" item="item" open="(" separator="," close=")">
+              #{item}
+          </foreach>
+        </if>
+          )
+    </select>
+
+    <select id="queryResourcesByGroupId" parameterType="QueryAppResourceDto" resultType="Resources">
+        select distinct r.*
+        from mxk_resources r
+        join mxk_permission p on p.resourceid = r.id and p.appid = r.appid
+        where r.appid = #{appId}
+          and r.status = 1
+          and p.status = 1
+        <if test="groupIds != null and groupIds.size() > 0">
+          and p.groupid in
+          <foreach collection="groupIds" item="item" open="(" separator="," close=")">
+              #{item}
+          </foreach>
+        </if>
+    </select>
+
+    <select id="queryResourcesByRoleId" parameterType="QueryAppResourceDto" resultType="Resources">
+        select distinct r.*
+        from mxk_resources r
+        join mxk_permission_role pr on pr.resourceid = r.id and pr.appid = r.appid
+        where r.appid = #{appId}
+          and r.status = 1
+          and pr.status = 1
+        <if test="roleIds != null and roleIds.size() > 0">
+          and pr.roleid in
+          <foreach collection="roleIds" item="item" open="(" separator="," close=")">
+              #{item}
+          </foreach>
+        </if>
+    </select>
+</mapper>

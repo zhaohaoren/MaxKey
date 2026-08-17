@@ -1,5 +1,7 @@
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '/sign/').replace(/\/$/, '')
-const adminApiBaseUrl = (import.meta.env.VITE_ADMIN_API_BASE_URL || '/maxkey-mgt-api/').replace(/\/$/, '')
+// The unified backend exposes management controllers below /sign/admin.
+// Keep VITE_ADMIN_API_BASE_URL as an override for deployments using the legacy 9526 service.
+const adminApiBaseUrl = (import.meta.env.VITE_ADMIN_API_BASE_URL || '/sign/admin/').replace(/\/$/, '')
 
 export interface ApiResponse<T = unknown> {
   code?: number
@@ -121,6 +123,10 @@ export function postForm<T>(path: string, data: Record<string, unknown>): Promis
     headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
     body,
   })
+}
+
+export function postFormData<T>(path: string, data: FormData): Promise<T> {
+  return request<T>(path, { method: 'POST', body: data })
 }
 
 export function put<T>(path: string, data: unknown): Promise<T> {

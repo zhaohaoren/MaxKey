@@ -1,0 +1,173 @@
+/*
+ * Copyright [2020] [MaxKey of copyright http://www.maxkey.top]
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+
+package com.snowx.iam.web.admin.controller.permissions;
+
+import com.snowx.iam.authn.annotation.CurrentUser;
+import com.snowx.iam.constants.ConstsAct;
+import com.snowx.iam.constants.ConstsActResult;
+import com.snowx.iam.constants.ConstsEntryType;
+import com.snowx.iam.entity.Message;
+import com.snowx.iam.entity.TreeAttributes;
+import com.snowx.iam.entity.TreeNode;
+import com.snowx.iam.entity.idm.UserInfo;
+import com.snowx.iam.entity.permissions.Resources;
+import com.snowx.iam.persistence.service.HistorySystemLogsService;
+import com.snowx.iam.persistence.service.ResourcesService;
+import com.snowx.iam.persistence.mybatis.PageResults;
+import com.snowx.iam.persistence.mybatis.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+
+@RestController
+@RequestMapping(value={"/admin/permissions/resources"})
+public class ResourcesController {
+    static final  Logger logger = LoggerFactory.getLogger(ResourcesController.class);
+    
+    @Autowired
+    ResourcesService resourcesService;
+    
+    @Autowired
+    HistorySystemLogsService systemLog;
+
+    @RequestMapping(value = { "/fetch" }, produces = {MediaType.APPLICATION_JSON_VALUE})
+    @ResponseBody
+    public Message<?> fetch(@ModelAttribute Resources resource,@CurrentUser UserInfo currentUser) {
+        logger.debug("fetch {}" , resource);
+        resource.setInstId(currentUser.getInstId());
+        return new Message<PageResults<Resources>>(
+                resourcesService.fetchPageResults(resource));
+    }
+
+    @ResponseBody
+    @RequestMapping(value={"/query"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> query(@ModelAttribute Resources resource,@CurrentUser UserInfo currentUser) {
+        logger.debug("-query  {}" , resource);
+        resource.setInstId(currentUser.getInstId());
+        List<Resources>  resourceList = resourcesService.query(resource);
+        if (resourceList != null) {
+             return new Message<List<Resources>>(Message.SUCCESS,resourceList);
+        } else {
+             return new Message<List<Resources>>(Message.FAIL);
+        }
+    }
+    
+    @RequestMapping(value = { "/get/{id}" }, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> get(@PathVariable String id) {
+        Resources resource=resourcesService.get(id);
+        return new Message<Resources>(resource);
+    }
+    
+    @ResponseBody
+    @RequestMapping(value={"/add"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> insert(@RequestBody Resources resource,@CurrentUser UserInfo currentUser) {
+        logger.debug("-Add  :" + resource);
+        resource.setId(resource.generateId());
+        resource.setInstId(currentUser.getInstId());
+        if (resourcesService.insert(resource)) {
+            systemLog.insert(
+                    ConstsEntryType.RESOURCE, 
+                    resource, 
+                    ConstsAct.CREATE, 
+                    ConstsActResult.SUCCESS, 
+                    currentUser);
+            return new Message<Resources>(Message.SUCCESS);
+        } else {
+            return new Message<Resources>(Message.FAIL);
+        }
+    }
+    
+    @ResponseBody
+    @RequestMapping(value={"/update"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> update(@RequestBody  Resources resource,@CurrentUser UserInfo currentUser) {
+        logger.debug("-update  :" + resource);
+        resource.setInstId(currentUser.getInstId());
+        if (resourcesService.update(resource)) {
+            systemLog.insert(
+                    ConstsEntryType.RESOURCE, 
+                    resource, 
+                    ConstsAct.UPDATE, 
+                    ConstsActResult.SUCCESS, 
+                    currentUser);
+            return new Message<Resources>(Message.SUCCESS);
+        } else {
+            return new Message<Resources>(Message.FAIL);
+        }
+    }
+    
+    @ResponseBody
+    @RequestMapping(value={"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> delete(@RequestParam List<String> ids,@CurrentUser UserInfo currentUser) {
+        logger.debug("-delete  ids : {} " , ids);
+        if (resourcesService.deleteBatch(ids)) {
+            systemLog.insert(
+                    ConstsEntryType.RESOURCE, 
+                    ids, 
+                    ConstsAct.DELETE, 
+                    ConstsActResult.SUCCESS, 
+                    currentUser);
+             return new Message<Resources>(Message.SUCCESS);
+        } else {
+            return new Message<Resources>(Message.FAIL);
+        }
+    }
+  
+  
+    @ResponseBody
+    @RequestMapping(value={"/tree"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> tree(@ModelAttribute Resources resource,@CurrentUser UserInfo currentUser) {
+        logger.debug("-tree  {}" , resource);
+        List<Resources>  resourceList = resourcesService.query(Query.<Resources>builder().eq("instid", currentUser.getInstId()));
+        if (resourceList != null) {
+            TreeAttributes treeAttributes = new TreeAttributes();
+            int nodeCount = 0;
+            for (Resources r : resourceList) {
+                TreeNode treeNode = new TreeNode(r.getId(),r.getResourceName());
+                treeNode.setParentKey(r.getParentId());
+                treeNode.setParentTitle(r.getParentName());
+                treeNode.setAttrs(r);
+                treeNode.setLeaf(true);
+                treeAttributes.addNode(treeNode);
+                nodeCount ++;
+                if(r.getId().equalsIgnoreCase(currentUser.getInstId())) {
+                    treeNode.setExpanded(true);
+                    treeNode.setLeaf(false);
+                    treeAttributes.setRootNode(treeNode);
+                }
+            }
+            
+            TreeNode rootNode = new TreeNode(resource.getAppId(),resource.getAppName());
+            rootNode.setParentKey(resource.getAppId());
+            rootNode.setExpanded(true);
+            rootNode.setLeaf(false);
+            treeAttributes.setRootNode(rootNode);
+            
+            treeAttributes.setNodeCount(nodeCount);
+             return new Message<TreeAttributes>(Message.SUCCESS,treeAttributes);
+        } else {
+             return new Message<TreeAttributes>(Message.FAIL);
+        }
+    }
+    
+
+}

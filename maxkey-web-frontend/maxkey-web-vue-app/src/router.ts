@@ -12,10 +12,25 @@ import AuthCallbackView from './views/AuthCallbackView.vue'
 import AdminDashboardView from './views/AdminDashboardView.vue'
 import PermissionRoleView from './views/PermissionRoleView.vue'
 import AppManagementView from './views/AppManagementView.vue'
+import PermissionAppsView from './views/PermissionAppsView.vue'
 import MemberAssignmentView from './views/MemberAssignmentView.vue'
 import AccessAssignmentView from './views/AccessAssignmentView.vue'
 import GroupPermissionView from './views/GroupPermissionView.vue'
 import ResourceManagementView from './views/ResourceManagementView.vue'
+import NoticesView from './views/NoticesView.vue'
+import ConfigSingletonView from './views/ConfigSingletonView.vue'
+import ConfigListView from './views/ConfigListView.vue'
+import AccountsManagementView from './views/AccountsManagementView.vue'
+import OrganizationsView from './views/OrganizationsView.vue'
+import UsersView from './views/UsersView.vue'
+import GroupsView from './views/GroupsView.vue'
+import GroupMembersView from './views/GroupMembersView.vue'
+import SessionsView from './views/SessionsView.vue'
+import PortalSessionsView from './views/PortalSessionsView.vue'
+import ProfileView from './views/ProfileView.vue'
+import MfaView from './views/MfaView.vue'
+import TimebasedView from './views/TimebasedView.vue'
+import PasskeyView from './views/PasskeyView.vue'
 
 const routerBase = '/maxkey/'
 
@@ -28,6 +43,7 @@ if (!window.location.hash && window.location.pathname.startsWith(routerBase) && 
 
 const router = createRouter({
   history: createWebHashHistory(routerBase),
+  scrollBehavior: () => ({ top: 0 }),
   routes: [
     { path: '/', redirect: '/dashboard/home' },
     { path: '/login', redirect: '/passport/login' },
@@ -41,12 +57,12 @@ const router = createRouter({
     { path: '/passport/trust/auth', component: AuthCallbackView, meta: { callbackMode: 'trust' } },
     { path: '/passport/logout', component: AuthCallbackView, meta: { callbackMode: 'logout' } },
     { path: '/dashboard/home', component: PortalView, meta: { requiresAuth: true } },
-    { path: '/access/sessions', component: PortalFeatureView, meta: { requiresAuth: true } },
-    { path: '/config/profile', component: PortalFeatureView, meta: { requiresAuth: true } },
+    { path: '/access/sessions', component: PortalSessionsView, meta: { requiresAuth: true } },
+    { path: '/config/profile', component: ProfileView, meta: { requiresAuth: true } },
     { path: '/config/password', component: PortalFeatureView, meta: { requiresAuth: true } },
-    { path: '/config/mfa', component: PortalFeatureView, meta: { requiresAuth: true } },
-    { path: '/config/timebased', component: PortalFeatureView, meta: { requiresAuth: true } },
-    { path: '/config/passkey', component: PortalFeatureView, meta: { requiresAuth: true } },
+    { path: '/config/mfa', component: MfaView, meta: { requiresAuth: true } },
+    { path: '/config/timebased', component: TimebasedView, meta: { requiresAuth: true } },
+    { path: '/config/passkey', component: PasskeyView, meta: { requiresAuth: true } },
     { path: '/audit/audit-logins', component: AuditView, meta: { requiresAuth: true, audit: 'logins' } },
     { path: '/audit/audit-login-apps', component: AuditView, meta: { requiresAuth: true, audit: 'apps' } },
     { path: '/audit/audit-system-logs', component: AuditView, meta: { requiresAuth: true, audit: 'systems' } },
@@ -56,17 +72,39 @@ const router = createRouter({
     { path: '/portal', redirect: '/dashboard/home' },
     { path: '/admin', component: AdminDashboardView, meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/apps', component: AppManagementView, meta: { requiresAuth: true, requiresAdmin: true } },
-    { path: '/admin/groupmembers', component: MemberAssignmentView, meta: { requiresAuth: true, requiresAdmin: true, assignment: 'group' } },
+    { path: '/admin/orgs', component: OrganizationsView, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/users', component: UsersView, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/groups', component: GroupsView, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/groupmembers', component: GroupMembersView, meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/roleMembers', component: MemberAssignmentView, meta: { requiresAuth: true, requiresAdmin: true, assignment: 'role' } },
     { path: '/admin/permissionRole', component: PermissionRoleView, meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/access', component: AccessAssignmentView, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/sessions', component: SessionsView, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/notices', component: NoticesView, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/institutions', component: ConfigSingletonView, meta: { requiresAuth: true, requiresAdmin: true, configPage: 'institutions' } },
+    { path: '/admin/accounts', component: AccountsManagementView, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/synchronizers', component: ConfigListView, meta: { requiresAuth: true, requiresAdmin: true, configPage: 'synchronizers' } },
+    { path: '/admin/connectors', component: ConfigListView, meta: { requiresAuth: true, requiresAdmin: true, configPage: 'connectors' } },
+    { path: '/admin/socialsprovider', component: ConfigListView, meta: { requiresAuth: true, requiresAdmin: true, configPage: 'socialsprovider' } },
+    { path: '/admin/ldapcontext', component: ConfigSingletonView, meta: { requiresAuth: true, requiresAdmin: true, configPage: 'ldapcontext' } },
+    { path: '/admin/emailsenders', component: ConfigSingletonView, meta: { requiresAuth: true, requiresAdmin: true, configPage: 'emailsenders' } },
+    { path: '/admin/smsprovider', component: ConfigSingletonView, meta: { requiresAuth: true, requiresAdmin: true, configPage: 'smsprovider' } },
+    { path: '/admin/passwordpolicy', component: ConfigSingletonView, meta: { requiresAuth: true, requiresAdmin: true, configPage: 'passwordpolicy' } },
     { path: '/admin/permission', component: GroupPermissionView, meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/resources', component: ResourceManagementView, meta: { requiresAuth: true, requiresAdmin: true } },
-    { path: '/admin/config/:resource', component: AdminView, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/permissions/apps', component: PermissionAppsView, meta: { requiresAuth: true, requiresAdmin: true } },
+    {
+      path: '/admin/config/:resource',
+      redirect: to => {
+        const resource = String(to.params.resource || '')
+        const target = ({ socialsproviders: 'socialsprovider', emailsender: 'emailsenders' } as Record<string, string>)[resource] || resource
+        return { path: `/admin/${target}`, query: to.query }
+      },
+    },
     { path: '/admin/permissions/:resource', component: AdminView, meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/access/:resource', component: AdminView, meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/audit/:audit', component: AuditView, meta: { requiresAuth: true, requiresAdmin: true } },
-    { path: '/admin/:resource?', component: AdminView, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/:resource', component: AdminView, meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/idm/organizations', redirect: '/admin/orgs' },
     { path: '/idm/users', redirect: '/admin/users' },
     { path: '/idm/groups', redirect: '/admin/groups' },
@@ -83,7 +121,8 @@ const router = createRouter({
     { path: '/permissions/roles', redirect: '/admin/roles' },
     { path: '/permissions/rolemembers', redirect: '/admin/roleMembers' },
     { path: '/permissions/resources', redirect: '/admin/resources' },
-    { path: '/permissions/apps', redirect: '/admin/apps' },
+    { path: '/permissions/permission', redirect: to => ({ path: '/admin/permission', query: to.query }) },
+    { path: '/permissions/apps', redirect: '/admin/permissions/apps' },
     { path: '/permissions/apps/permission', redirect: to => ({ path: '/admin/permission', query: to.query }) },
     { path: '/permissions/apps/resources', redirect: to => ({ path: '/admin/resources', query: to.query }) },
     { path: '/permissions/apps/roles', redirect: to => ({ path: '/admin/roles', query: to.query }) },
@@ -98,6 +137,9 @@ const router = createRouter({
     { path: '/config/emailsender', redirect: '/admin/emailsenders' },
     { path: '/config/smsprovider', redirect: '/admin/smsprovider' },
     { path: '/config/passwordpolicy', redirect: '/admin/passwordpolicy' },
+    { path: '/config/notices', redirect: '/admin/notices' },
+    { path: '/audit/audit-synchronizer', redirect: '/admin/audit/synchronizers' },
+    { path: '/audit/audit-connector', redirect: '/admin/audit/connectors' },
     { path: '/:pathMatch(.*)*', redirect: '/portal' },
   ],
 })

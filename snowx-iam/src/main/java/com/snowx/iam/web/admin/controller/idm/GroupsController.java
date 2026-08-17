@@ -1,0 +1,145 @@
+/*
+ * Copyright [2022] [MaxKey of copyright http://www.maxkey.top]
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+
+package com.snowx.iam.web.admin.controller.idm;
+
+import org.apache.commons.lang3.StringUtils;
+import com.snowx.iam.authn.annotation.CurrentUser;
+import com.snowx.iam.constants.ConstsAct;
+import com.snowx.iam.constants.ConstsActResult;
+import com.snowx.iam.constants.ConstsEntryType;
+import com.snowx.iam.entity.Message;
+import com.snowx.iam.entity.idm.Groups;
+import com.snowx.iam.entity.idm.UserInfo;
+import com.snowx.iam.entity.permissions.Roles;
+import com.snowx.iam.persistence.service.GroupsService;
+import com.snowx.iam.persistence.service.HistorySystemLogsService;
+import com.snowx.iam.persistence.mybatis.PageResults;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
+import java.util.List;
+
+
+@RestController
+@RequestMapping(value={"/admin/access/groups"})
+public class GroupsController {
+    static final Logger logger = LoggerFactory.getLogger(GroupsController.class);
+    
+    @Autowired
+    GroupsService service;
+    
+    @Autowired
+    HistorySystemLogsService systemLog;
+    
+    @RequestMapping(value = { "/fetch" }, produces = {MediaType.APPLICATION_JSON_VALUE})
+    @ResponseBody
+    public Message<?> fetch(
+            @ModelAttribute Groups group,
+            @CurrentUser UserInfo currentUser) {
+        logger.debug("group {}" , group);
+        group.setInstId(currentUser.getInstId());
+        return new Message<PageResults<Groups>>(
+                service.fetchPageResults(group));
+    }
+
+    @ResponseBody
+    @RequestMapping(value={"/query"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> query(@ModelAttribute Groups group,@CurrentUser UserInfo currentUser) {
+        logger.debug("-query  : {}" , group);
+        group.setInstId(currentUser.getInstId());
+        if (service.query(group)!=null) {
+             return new Message<Groups>(Message.SUCCESS);
+        } else {
+             return new Message<Groups>(Message.FAIL);
+        }
+        
+    }
+    
+    @RequestMapping(value = { "/get/{id}" }, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> get(@PathVariable String id,@CurrentUser UserInfo currentUser) {
+        Groups group =service.get(id);
+        return new Message<Groups>(group);
+    }
+    
+    @ResponseBody
+    @RequestMapping(value={"/add"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> insert(@RequestBody Groups group,@CurrentUser UserInfo currentUser) {
+        logger.debug("-Add  : {}" , group);
+        group.setInstId(currentUser.getInstId());
+        group.setId(group.generateId());
+        if(StringUtils.isBlank(group.getGroupCode())) {
+            group.setGroupCode(group.getId());
+        }
+        if (service.insert(group)) {
+            service.refreshDynamicGroups(group);
+            systemLog.insert(
+                    ConstsEntryType.ROLE, 
+                    group, 
+                    ConstsAct.CREATE, 
+                    ConstsActResult.SUCCESS, 
+                    currentUser);
+            return new Message<Groups>(Message.SUCCESS);
+        } else {
+            return new Message<Groups>(Message.FAIL);
+        }
+    }
+    
+    @ResponseBody
+    @RequestMapping(value={"/update"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> update(@RequestBody Groups group,@CurrentUser UserInfo currentUser) {
+        logger.debug("-update  group : {}" , group);
+        if("ROLE_ALL_USER".equalsIgnoreCase(group.getId())) {
+            group.setDefaultAllUser();
+        }
+        group.setInstId(currentUser.getInstId());
+        if (service.update(group)) {
+            service.refreshDynamicGroups(group);
+            systemLog.insert(
+                    ConstsEntryType.ROLE, 
+                    group, 
+                    ConstsAct.UPDATE, 
+                    ConstsActResult.SUCCESS, 
+                    currentUser);
+            return new Message<Roles>(Message.SUCCESS);
+        } else {
+            return new Message<Roles>(Message.FAIL);
+        }
+    }
+
+    @ResponseBody
+    @RequestMapping(value={"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<?> delete(@RequestParam List<String> ids,@CurrentUser UserInfo currentUser) {
+        logger.debug("-delete ids : {}" , ids);
+        ids.removeAll(Arrays.asList("ROLE_ALL_USER","ROLE_ADMINISTRATORS","-1"));
+        if (service.deleteBatch(ids)) {
+            systemLog.insert(
+                    ConstsEntryType.ROLE, 
+                    ids, 
+                    ConstsAct.DELETE, 
+                    ConstsActResult.SUCCESS, 
+                    currentUser);
+             return new Message<Roles>(Message.SUCCESS);
+        } else {
+            return new Message<Roles>(Message.FAIL);
+        }
+    }
+}

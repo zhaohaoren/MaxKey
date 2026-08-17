@@ -2,6 +2,7 @@ import type { Router } from 'vue-router'
 
 const EXTERNAL_REDIRECT_KEY = 'redirect_uri'
 const INTERNAL_REDIRECT_KEY = 'maxkey_login_redirect'
+export const LOGIN_WELCOME_KEY = 'maxkey_login_welcome'
 
 function decodeBase64Url(value: string) {
   const base64 = value.replace(/-/g, '+').replace(/_/g, '/')
@@ -18,8 +19,10 @@ export function rememberLoginRedirect(encodedExternal?: string, internal?: strin
     } catch {
       localStorage.removeItem(EXTERNAL_REDIRECT_KEY)
     }
-  }
+  } else localStorage.removeItem(EXTERNAL_REDIRECT_KEY)
+
   if (internal?.startsWith('/')) localStorage.setItem(INTERNAL_REDIRECT_KEY, internal)
+  else localStorage.removeItem(INTERNAL_REDIRECT_KEY)
 }
 
 export async function navigateAfterLogin(router: Router, defaultPath = '/dashboard/home') {
@@ -31,5 +34,7 @@ export async function navigateAfterLogin(router: Router, defaultPath = '/dashboa
     window.location.assign(external)
     return
   }
-  await router.replace(internal || defaultPath)
+  const target = internal || defaultPath
+  if (target === '/dashboard/home') sessionStorage.setItem(LOGIN_WELCOME_KEY, '1')
+  await router.replace(target)
 }
